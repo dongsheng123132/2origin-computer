@@ -129,6 +129,20 @@ else
   manual "C8" "缺 bench 脚本或 node（见 2origin-harness/bench）"
 fi
 
+# ── C9 续作效率（对照实验：2Origin vs 传统）──
+say ""
+say "── C9 Continuation Efficiency (2Origin vs traditional) ──"
+COMPARE="$ROOT/../2origin-harness/bench/compare-bench.mjs"
+if [ -f "$COMPARE" ] && command -v node >/dev/null 2>&1; then
+  if node "$COMPARE" 20 >/dev/null 2>&1; then
+    pass "C9 续作效率：2Origin 无追问续作且省 token（传统 transcript 无法无追问续作）"
+  else
+    fail "C9 续作效率" "compare-bench.mjs 未通过（见上方输出）"
+  fi
+else
+  manual "C9" "缺 compare-bench.mjs 或 node（见 2origin-harness/bench）"
+fi
+
 # ── 汇总 ──
 say ""
 say "════════ 汇总 ════════"

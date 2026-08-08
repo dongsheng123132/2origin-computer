@@ -110,8 +110,9 @@ Both auto-loaded the same `task.origin.json` via SessionStart hook and reported 
 | C6 | No auto-permanent learning | ✅ |
 | C7 | Auditable | ✅ |
 | C8 | Cross-Session Retention | ✅ 100% |
+| C9 | Continuation Efficiency | ✅ 3.1x + resumable |
 
-**8/8 通过。** C3 经历了诚实链条：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro` 真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。C8（学历保留率）是 2Origin 独有指标（传统 harness=0%），证明"多年不遗忘"的机制能力。首测证据必须诚实，但证据补足后可以如实标绿。
+**9/9 通过。** C3 经历了诚实链条：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro` 真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。C8（学历保留率）是 2Origin 独有指标（传统 harness=0%），证明"多年不遗忘"的机制能力。首测证据必须诚实，但证据补足后可以如实标绿。
 
 ## C8 — Cross-Session Retention (ShadowWork Bench) ✅
 
@@ -124,3 +125,17 @@ Both auto-loaded the same `task.origin.json` via SessionStart hook and reported 
 **Evidence (2026-08-08):** 50 facts across 20 simulated session closes/reopens → **100.0%** retention. New session auto-loads all credentials via benjing bundle. Traditional harness (no 本境) = 0%.
 
 > Honest scope: this measures the *mechanism* (the 本境 preserves credentials across sessions), not the *semantic quality* of what's preserved (that's gated by promotion + auto-forgetting).
+
+---
+
+## C9 — Continuation Efficiency (2Origin vs traditional) ✅
+
+> Quantifies the core insight: **state (本象) beats transcript (shadow)**.
+
+**Test:** `bash conformance/run-tests.sh` → C9 runs `2origin-harness/bench/compare-bench.mjs`.
+
+**Pass =** 2Origin resumes without re-asking AND uses less tokens than a traditional transcript.
+
+**Evidence (2026-08-08):** 30 rounds of work then resume — 2Origin bundle 2915B vs traditional transcript 8907B (3.1x). Traditional transcript is a dialogue stream with no structured goal/state/next-steps → **cannot resume without re-asking**; 2Origin's bundle contains them → resumes.
+
+> Honest scope: simulated transcript (generated), measures continuation cost, not task success rate (that needs a real model run).
