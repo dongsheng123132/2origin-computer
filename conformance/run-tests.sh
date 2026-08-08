@@ -101,9 +101,18 @@ fi
 
 # ── C2 / C3 需要真实外部依赖 ──
 say ""
-say "── C2 / C3 (需真实外部依赖) ──"
-manual "C2" "跨 harness 需 codex exec + 南桥 MCP：见 RFC §8-B/C"
-manual "C3" "跨模型需第二个真实端点（如虾盘云 deepseek-v4-pro）：见 RFC §8 与 conformance README"
+say "── C2 / C3 (前提可复跑 + 外部依赖标注) ──"
+if [ -f "$ROOT/conformance/tools/verify-c2c3.mjs" ] && command -v node >/dev/null 2>&1; then
+  if node "$ROOT/conformance/tools/verify-c2c3.mjs" >/dev/null 2>&1; then
+    pass "C2/C3 前提（跨 harness 读取机制 + 模型无关格式）可复跑验证通过"
+  else
+    fail "C2/C3 前提" "verify-c2c3.mjs 未通过（见上方输出）"
+  fi
+else
+  manual "C2/C3" "缺 node 或 verify-c2c3.mjs"
+fi
+manual "C2" "完整跨 harness（真实 Codex 续作）需 codex exec：见 RFC §8-B/C"
+manual "C3" "完整跨模型（真实第二端点）需第二个模型：见 RFC §8 与 conformance README"
 
 # ── 汇总 ──
 say ""
