@@ -129,18 +129,53 @@ else
   manual "C8" "缺 bench 脚本或 node（见 2origin-harness/bench）"
 fi
 
-# ── C9 续作效率（对照实验：2Origin vs 传统）──
+# ── C9 续作成本（模拟对照，非证据级）──
+# 注意：C9 的对照 transcript 由脚本自己生成，且从没把 goal 原文写进去——
+# "传统不可续作"是构造出来的，不是观察到的。它只作为机制自测保留；
+# "更有效"的真实证据在 C10。见 2origin-harness/bench/README.md 顶部说明。
 say ""
-say "── C9 Continuation Efficiency (2Origin vs traditional) ──"
+say "── C9 Continuation Cost (simulated, mechanism self-test) ──"
 COMPARE="$ROOT/../2origin-harness/bench/compare-bench.mjs"
 if [ -f "$COMPARE" ] && command -v node >/dev/null 2>&1; then
   if node "$COMPARE" 20 >/dev/null 2>&1; then
-    pass "C9 续作效率：2Origin 无追问续作且省 token（传统 transcript 无法无追问续作）"
+    pass "C9 续作成本自测通过（模拟对照；其结论不作证据用——真实对照见 C10）"
   else
-    fail "C9 续作效率" "compare-bench.mjs 未通过（见上方输出）"
+    fail "C9 续作成本" "compare-bench.mjs 未通过（见上方输出）"
   fi
 else
   manual "C9" "缺 compare-bench.mjs 或 node（见 2origin-harness/bench）"
+fi
+
+# ── C10 状态 vs 对话流（ShadowWork Bench v0.2：真实语料 + 真实模型）──
+# 默认只跑 --dry-run（免费、离线）：验证语料真实、题目可构造、两臂预算对齐。
+# 真打模型一次约 270 万输入 token，要花钱，所以必须显式 SHADOWWORK_LIVE=1。
+# 「会悄悄花钱的 conformance 项」本身就是缺陷，这里把花钱做成显式开关。
+say ""
+say "── C10 State vs Transcript (ShadowWork Bench v0.2) ──"
+V2="$ROOT/../2origin-harness/bench/shadowwork-bench-v2.mjs"
+if [ -f "$V2" ] && command -v node >/dev/null 2>&1; then
+  DRY=$(node "$V2" --dry-run 2>/dev/null)
+  BUNDLE_N=$(printf '%s' "$DRY" | grep -oE 'arm 2origin +payload +[0-9]+' | grep -oE '[0-9]+$')
+  TRANS_N=$(printf '%s' "$DRY" | grep -oE 'arm transcript +payload +[0-9]+' | grep -oE '[0-9]+$')
+  REAL_T=$(printf '%s' "$DRY" | grep -cE '\.jsonl \([0-9]+ B\)')
+  if [ -z "$BUNDLE_N" ] || [ -z "$TRANS_N" ]; then
+    manual "C10" "bench v0.2 dry-run 无输出（缺学历语料或真实会话记录，见 bench/RESULTS-v2.md）"
+  elif [ "$BUNDLE_N" != "$TRANS_N" ]; then
+    fail "C10 预算对齐" "两臂 payload 不等长（$BUNDLE_N vs $TRANS_N）——对照不成立"
+  elif [ "$REAL_T" -lt 1 ]; then
+    fail "C10 语料真实性" "对照组没有真实会话记录，退化成自己生成的稻草人（正是 C9 的病）"
+  elif [ "${SHADOWWORK_LIVE:-0}" = "1" ]; then
+    OUT=$(node "$V2" --facts 40 --mc-facts 10 --max-tokens 8000 2>/dev/null)
+    if printf '%s' "$OUT" | grep -q 'finish_reason=length'; then
+      fail "C10" "有调用被 max-tokens 截断，该臂分数不可用——调大 --max-tokens 重跑"
+    else
+      pass "C10 真跑：$(printf '%s' "$OUT" | grep '同预算对照')"
+    fi
+  else
+    pass "C10 结构检查通过（对照组 ${REAL_T} 份真实会话记录，两臂预算对齐 ${BUNDLE_N}B）—— 打模型需 SHADOWWORK_LIVE=1"
+  fi
+else
+  manual "C10" "缺 shadowwork-bench-v2.mjs 或 node（见 2origin-harness/bench）"
 fi
 
 # ── 汇总 ──

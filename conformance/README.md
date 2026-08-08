@@ -109,10 +109,20 @@ Both auto-loaded the same `task.origin.json` via SessionStart hook and reported 
 | C5 | Verifiable results | ✅ |
 | C6 | No auto-permanent learning | ✅ |
 | C7 | Auditable | ✅ |
-| C8 | Cross-Session Retention | ✅ 100% |
-| C9 | Continuation Efficiency | ✅ 3.1x + resumable |
+| C8 | Cross-Session Retention | ✅ 100%（机制） |
+| C9 | Continuation Cost | ⚠️ 降级为机制自测，原结论已撤回 |
+| C10 | State vs Transcript | ✅ 100% vs 30.8%（真实语料+真实模型） |
 
-**9/9 通过。** C3 经历了诚实链条：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro` 真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。C8（学历保留率）是 2Origin 独有指标（传统 harness=0%），证明"多年不遗忘"的机制能力。首测证据必须诚实，但证据补足后可以如实标绿。
+**10 项：9 ✅ / 1 ⚠️。** 两条诚实链条：
+
+- **C3**：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro`
+  真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。
+- **C9**：初标 ✅「传统 transcript 无法无追问续作」→ 复核发现该结论由对照组的**生成方式**
+  保证恒真（判分器测的是自己写下的话）→ 降级为机制自测，"更有效"的证据改由 **C10**
+  用真实语料 + 真实模型重新取得。真实答案比原结论更锋利：传统 transcript **能**续，
+  **但会自信地续错任务**。
+
+首测证据必须诚实；证据补足后可以如实标绿，证据被推翻时必须如实降级。
 
 ## C8 — Cross-Session Retention (ShadowWork Bench) ✅
 
@@ -128,14 +138,64 @@ Both auto-loaded the same `task.origin.json` via SessionStart hook and reported 
 
 ---
 
-## C9 — Continuation Efficiency (2Origin vs traditional) ✅
+## C9 — Continuation Cost (simulated self-test) ⚠️ 已降级
 
-> Quantifies the core insight: **state (本象) beats transcript (shadow)**.
+> 原标题 "Continuation Efficiency (2Origin vs traditional)"，原结论
+> "传统 transcript 无法无追问续作"。**该结论已撤回**——它是构造出来的，不是观察到的。
 
 **Test:** `bash conformance/run-tests.sh` → C9 runs `2origin-harness/bench/compare-bench.mjs`.
 
-**Pass =** 2Origin resumes without re-asking AND uses less tokens than a traditional transcript.
+**为什么降级：** `compare-bench.mjs` 的对照组 transcript 由脚本自己的 `genTranscript` 生成，
+而它**从没把 `goal` / `next_steps[0]` 原文写进 transcript**，于是 `tradCanResume` 恒为 `false`，
+而 `success` 的判定条件正是 `!tradCanResume`。**判分器测的是自己写下的话，不是世界。**
 
-**Evidence (2026-08-08):** 30 rounds of work then resume — 2Origin bundle 2915B vs traditional transcript 8907B (3.1x). Traditional transcript is a dialogue stream with no structured goal/state/next-steps → **cannot resume without re-asking**; 2Origin's bundle contains them → resumes.
+实测复核：
+```
+transcript 是否含 goal 原文 : false
+transcript 是否含 step 原文 : false
+→ compare-bench 的 success 条件恒为 true
+```
 
-> Honest scope: simulated transcript (generated), measures continuation cost, not task success rate (that needs a real model run).
+**现在的身份：** 机制自测（bundle 侧确实含 goal/next-steps，这部分成立）。
+**"更有效"的真实证据改由 C10 承担。**
+
+> 诚实链条：C9 初标 ✅「传统无法续作」→ 用真实语料 + 真实模型复测（C10）→ 发现传统
+> transcript **能**无追问续作，只是**续错任务**。原结论方向对、机制说错了，故撤回重述。
+> 这是 C3 那条"初标✅ → 纠正 → 真实复测"的同一条纪律。
+
+---
+
+## C10 — State vs Transcript (ShadowWork Bench v0.2) ✅
+
+> "状态优于对话流"的**真实**对照实验：真实语料 + 真实模型 + 真值取自磁盘。
+
+**Test:** `bash conformance/run-tests.sh` → C10 跑 `shadowwork-bench-v2.mjs --dry-run`
+（免费、离线：验证对照组是真实会话记录、两臂 payload 等长）。
+真打模型需 `SHADOWWORK_LIVE=1 bash conformance/run-tests.sh`——一次约 270 万输入 token，
+要花钱，所以做成显式开关：**会悄悄花钱的 conformance 项本身就是缺陷。**
+
+**Pass =** 对照组必须是**真实会话记录**（不是脚本生成的），且两臂 payload 等长（预算对齐）。
+
+**Evidence (2026-08-08):** 8 份真实 `task.origin.json`（114 条已验证事实）+ 2 份真实 Claude Code
+会话记录（3.0MB + 2.1MB）。`deepseek-v4-flash`，temperature 0，四个臂只差"开场喂什么"：
+
+| arm | 输入token | 四选一（瞎猜 25%） | 事实均衡准确率（瞎猜 50%） | 反问 |
+|---|---|---|---|---|
+| **2origin**（本境 bundle 9549B） | 5,154 | **100.0%** | **97.5%** | 否 |
+| transcript（真实对话流，**同样 9549B**） | 4,392 | 30.8% | 50.0% | 否 |
+| transcript-10x（10 倍预算） | 39,916 | 46.2% | 45.0% | 否 |
+| none（什么都不喂） | 232 | 30.8% | 52.5% | **是** |
+
+三条结论：
+
+1. **同预算下，重放对话流 ≈ 什么都不喂**——两者都贴着瞎猜线，统计上分不开。
+2. **给传统 10 倍预算（7.7x token）仍追不平**——不是 token 不够，是形态不对。
+3. **对话流不会说"我不知道"，它会自信地续错任务。** `transcript` 与 `transcript-10x`
+   都没反问、语气笃定，却把**最近在忙的活**当成了**任务本身**；反而是 `none` 臂老实说
+   "信息不足，请告诉我任务是什么"。**在真实 agent 循环里，带着错误目标一路干下去，
+   比停下来问更危险。**
+
+> Honest scope: 单模型 / 单任务 / 单次，未做重采样；`2origin` 臂的 100% 有开卷效应
+> （事实字面写在 bundle 里）——本实验测的是"状态能不能无损送达"，**对照臂的低分才是信息量所在**。
+> 对话流用的是"尾部截断"（传统 compaction 的常见做法）；做了摘要/RAG 的传统 harness 会更好，
+> 那是 v0.3 该加的臂。完整方法、敏感性分析与踩过的坑见 `2origin-harness/bench/RESULTS-v2.md`。
