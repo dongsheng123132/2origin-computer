@@ -131,7 +131,25 @@ content_hash = sha256(canonical(state - {version, updated_at, content_hash, acto
 
 ---
 
-## 6. 讨论点
+## 6. 职责分界：本境的任务层 vs 环境层
+
+**本境分两层，别混成一个协议：**
+
+| 层 | 对象 | 管什么 | 实现 |
+|---|---|---|---|
+| **任务层** | `task.origin`（本 RFC） | 任务到哪了：目标/事实/下一步/学历 | benjing/0.2（本 RFC） |
+| **环境层** | `environment.origin` | 机器能跑什么：OS/工具链/路径 | uenv（spec `origin-environment/v0.1`） |
+
+**为什么分开**：环境快照（这台机器什么样）和任务学历（这个任务到哪了）正交——像 Linux 的 `/etc`（环境配置）和 `/var`（运行状态）。硬合并会造成"一个协议既描述机器又描述任务"的混乱。
+
+**规则**：
+- 环境层变化（装了 Python、改路径）→ 更新 `environment.origin`，不影响 `task.origin`
+- 任务层变化（进度推进、新事实）→ 更新 `task.origin`，不写环境
+- 两者可关联（任务学历引用环境快照的版本），但各自独立演进
+
+---
+
+## 7. 讨论点
 
 1. content_hash 的 canonical 序列化规则要不要出正式规范（字段顺序/转义）？
 2. source_kind 的启发式判定要不要支持自定义？
