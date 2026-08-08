@@ -22,9 +22,10 @@ function main() {
 
   const report = { id: s.id, passed: [], failed: [], missing: [] };
 
-  // CHECK 1: artifacts 真实存在
+  // CHECK 1: artifacts 真实存在（以状态文件所在目录为基准解析）
+  const stateDir = path.dirname(path.resolve(statePath));
   for (const a of (s.artifacts || [])) {
-    const p = path.resolve(ROOT, a);
+    const p = path.isAbsolute(a) ? a : path.resolve(stateDir, a);
     if (fs.existsSync(p)) report.passed.push(`artifact存在: ${a}`);
     else report.failed.push(`artifact缺失: ${a}`);
   }

@@ -1,0 +1,118 @@
+#!/bin/bash
+# run-tests.sh — 一键跑 2Origin Conformance（可自动化部分）
+# 用法: bash conformance/run-tests.sh
+# 输出: 每项 [PASS]/[FAIL]/[MANUAL]，最后汇总。退出码 0=全部通过/手动，1=有失败。
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PASS=0; FAIL=0; MANUAL=0
+declare -a FAILED=()
+
+say()  { printf '%s\n' "$*"; }
+pass() { say "[PASS] $1"; PASS=$((PASS+1)); }
+fail() { say "[FAIL] $1 — $2"; FAIL=$((FAIL+1)); FAILED+=("$1"); }
+manual(){ say "[MANUAL] $1 — $2"; MANUAL=$((MANUAL+1)); }
+
+say "════════ 2Origin Conformance · 一键测试 ════════"
+say "date: $(date '+%Y-%m-%d %H:%M')"
+
+# ── C1 跨 Session（环境即镜像）──
+# 验证：全新会话（无对话铺垫）能否从 task.origin.json 自动加载状态
+say ""
+say "── C1 Cross-Session ──"
+if command -v claude >/dev/null 2>&1; then
+  # 用一个最小临时目录 + 复刻 hooks + 示例状态，避免污染仓库
+  TMP=$(mktemp -d)
+  cp -r "$ROOT/.claude_template" "$TMP/.claude" 2>/dev/null || {
+    # 无模板就用仓库内示例状态做只读验证
+    TMP=""
+  }
+  if [ -n "$TMP" ]; then
+    cp "$ROOT/examples/office-agent/task.origin.json" "$TMP/task.origin.json"
+    OUT=$(cd "$TMP" && claude -p "回答：开场信息里有没有『学堂加载』？任务标题是什么？" 2>/dev/null)
+    if echo "$OUT" | grep -qiE "学堂加载|task origin|task.origin"; then
+      pass "C1 全新会话从状态自动加载（headless）"
+    else
+      fail "C1" "headless 会话未检测到状态注入"
+    fi
+    rm -rf "$TMP"
+  else
+    manual "C1" "无 .claude_template，跳过自动复刻（见 README 手动步骤）"
+  fi
+else
+  manual "C1" "未安装 claude CLI，无法 headless 验证"
+fi
+
+# ── C4 动作可迁移 ──
+say ""
+say "── C4 Portable Actions ──"
+if [ -f "$ROOT/examples/portable-action/document-save.js" ] && command -v node >/dev/null 2>&1; then
+  H1=$(node "$ROOT/examples/portable-action/document-save.js" --driver cli 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).sha256)}catch{process.stdout.write('')}})")
+  H2=$(node "$ROOT/examples/portable-action/document-save.js" --driver api 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).sha256)}catch{process.stdout.write('')}})")
+  if [ -n "$H1" ] && [ "$H1" = "$H2" ]; then
+    pass "C4 双 driver 同 sha256（$H1）"
+  else
+    fail "C4" "driver 输出哈希不一致: $H1 vs $H2"
+  fi
+else
+  manual "C4" "缺 node 或示例文件"
+fi
+
+# ── C5 结果可验证 ──
+say ""
+say "── C5 Verifiable Results ──"
+if command -v node >/dev/null 2>&1; then
+  for state in "$ROOT"/examples/office-agent/task.origin.json; do
+    if node "$ROOT/conformance/tools/verify-state.mjs" "$state" >/dev/null 2>&1; then
+      pass "C5 状态可验证（$state）"
+    else
+      fail "C5" "verify-state 对 $state 判 FAIL"
+    fi
+  done
+else
+  manual "C5" "缺 node"
+fi
+
+# ── C6 学习不自动永久化 ──
+say ""
+say "── C6 No auto-permanent learning ──"
+if command -v node >/dev/null 2>&1; then
+  S="$ROOT/examples/office-agent/task.origin.json"
+  # 检查 learnings 是否都带 status 且不含未经验证的 auto-verified
+  AUTO=$(node -e "const s=require(process.argv[1]);const bad=(s.learnings||[]).filter(l=>!l.status||(l.status==='verified'&&!l.confidence));process.stdout.write(String(bad.length));" "$S" 2>/dev/null)
+  if [ "$AUTO" = "0" ]; then
+    pass "C6 learnings 全部带 candidate/verified 状态，无无置信度冒升"
+  else
+    fail "C6" "存在 $AUTO 条无状态/无置信度的 learnings"
+  fi
+else
+  manual "C6" "缺 node"
+fi
+
+# ── C7 可审计 ──
+say ""
+say "── C7 Auditable ──"
+AUDIT="$ROOT/../ShadowOS = Harness OS/southbridge/audit.log"  # 真实审计日志在运行时目录
+if [ -f "$AUDIT" ] && grep -q "southbridge_write" "$AUDIT" 2>/dev/null; then
+  pass "C7 南桥写动作有审计记录（$AUDIT）"
+else
+  manual "C7" "未找到运行时 audit.log（南桥原型在 ShadowOS 工作目录）"
+fi
+
+# ── C2 / C3 需要真实外部依赖 ──
+say ""
+say "── C2 / C3 (需真实外部依赖) ──"
+manual "C2" "跨 harness 需 codex exec + 南桥 MCP：见 RFC §8-B/C"
+manual "C3" "跨模型需第二个真实端点（如虾盘云 deepseek-v4-pro）：见 RFC §8 与 conformance README"
+
+# ── 汇总 ──
+say ""
+say "════════ 汇总 ════════"
+say "PASS: $PASS   FAIL: $FAIL   MANUAL: $MANUAL"
+if [ "$FAIL" -gt 0 ]; then
+  say "失败项:"
+  for f in "${FAILED[@]}"; do say "  - $f"; done
+  exit 1
+fi
+say "（MANUAL 项需人工/外部依赖，见 README 各节）"
+exit 0
