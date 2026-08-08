@@ -55,15 +55,20 @@
 | 长期存储 | SSD + 文件系统 | **本境 Benjing** | 这台 AI 学会的一切 |
 | 世界表示 | 显卡/场景图 | **本象 Benxiang** | 把世界变成 AI 可计算的对象 |
 | I/O | 南桥 + 驱动 | **影核 ActionParity** | 改变世界（GUI/CLI/API/设备） |
-| 高速总线 | 北桥 | **OriginBus** | 把相关状态编译进 Context |
+| 系统互连 | 南北桥总线 | **OriginBus 本源总线** | 三条通道：State（知）/ Action（行）/ Trust（谁准了） |
 | 内核/启动 | BIOS + Kernel | **Harness**（可替换） | 调度、上下文、工具 |
+| 适配 | 芯片组驱动 | **Harness Adapter** | 把 OriginBus 的授权表达翻译成目标 harness 认得的形式 |
 | 自学习 | 系统服务 | **学堂 Academy** | 经验沉淀成本境"学历" |
 | 整机 | PC | **U-King** | 第一台参考实现 |
+
+> **OriginBus 原先只被定义为"北桥"（把状态编译进 Context）。**
+> 2026-08-08 实测发现它还必须覆盖 Action 与 Trust 两条通道——因为南桥的授权模型
+> 在 harness 闸门面前**一次也没生效过**（请求根本没到达南桥）。见 [RFC-0001](RFC-0001-originbus.md)。
 
 ### 3.2 一句话分工
 
 > **本象保存世界，本境保存成长，影核改变世界。**
-> **北桥负责知（Know What），南桥负责行（Do What）。**
+> **北桥负责知（Know What），南桥负责行（Do What），Trust Lane 负责"凭什么准"（Who Says So）。**
 
 ---
 
@@ -170,10 +175,19 @@ candidate → reviewed → verified → deprecated / superseded
 - Codex（`codex exec`）只凭 `task.origin.json` + facts **零追问续作** STEP-B
 - 会话日志证实 Codex 从未问"任务是什么"
 
-### 证据 C — 发现的瓶颈（写权限，待下版）
-- Codex 沙箱只读时正文落盘被策略拦截
-- 表明跨 harness 真正缺的不是状态格式，而是 **OriginBus Trust 层的统一写授权**
-- 这是"南桥"/ Trust Plane 的职责，本架构将其列为必建组件
+### 证据 C — 发现的瓶颈（写权限）**【已修正两处，2026-08-08 晚】**
+
+- ~~Codex 沙箱只读时正文落盘被策略拦截~~ **归因错误**。当日复测：本机 codex 的
+  Windows 沙箱 runner 本身是坏的（`CreateProcessAsUserW failed: 5`，连只读 `Get-Date`
+  都起不来）。真正拦住写的是 harness 的**工具审批闸门**，不是沙箱策略——铁证是
+  南桥 `audit.log` **零记录**：请求从未到达南桥。
+- 表明跨 harness 真正缺的不是状态格式，而是 **OriginBus Trust 层的统一写授权** ✅ 这句成立
+- ~~这是"南桥" / Trust Plane 的职责~~ **归属错误**。南桥的授权模型完全正确却一次也没生效，
+  因为它是**被拦的一方**——有判断依据（risk 分级）但没有决策权。
+  **正确归属：南桥负责生产风险信息；跨层的授权表达属于 OriginBus 的 Trust Lane，
+  落地责任在 Harness Adapter。** 见 [RFC-0001 本源总线](RFC-0001-originbus.md)。
+- **已解一半**：加一条不经过该闸门的通道（CLI Adapter），Hermes 经它落盘成功，
+  两条通道判决字节级一致。仍未解：codex 的 per-server 授信（harness 侧）。
 
 ---
 
@@ -189,10 +203,38 @@ candidate → reviewed → verified → deprecated / superseded
 
 1. 本境（持久状态）的分层：SQLite 事实源 + 文件快照 + 可选向量索引，是否足够？
 2. 北桥 Context 编译（相关性与 Token 预算）该有怎样的标准接口？
-3. 南桥写权限（Trust/Approval）的最小安全模型怎么定？
+3. ~~南桥写权限（Trust/Approval）的最小安全模型怎么定？~~ **已答，见 RFC-0006 §2（南桥内部）
+   + RFC-0001 §3（跨层）。** 结论：最小安全模型不是"批准"，是**可核验的凭据**——
+   `proof_of_read`（"证明你读过当前内容"），无头 agent 自己拿得出，且随世界变化自动失效。
 4. 学堂经验晋升的人工审核门槛，哪些该自动、哪些该人工？
+5. **【新】Trust Lane 的第二种凭据长什么样？** `proof_of_read` 只适用于"目标有可读的
+   当前内容"的动作。启动进程 / 发消息 / 调外部 API 出示不了它。**暂无实测支撑，不猜。**
+6. **【新】协议文本的单一真相源怎么定？** 同一套南桥语义目前散在三处且已漂移
+   （本仓库 RFC-0006 §2 / ShadowOS 的 RFC-0004 / 2origin-harness 实现），
+   `spec` 字段相同但内容不同。见 §11。
 
-**相关 RFC**：[RFC-0005 本境协议 v0.2](RFC-0005-benjing-v0.2.md)（content_hash 乐观锁 / source 可复核 / actor provenance / bundle 编译）· [RFC-0006 北桥接口 & 南桥 Trust 模型](RFC-0006-northbridge-southbridge.md)（context.request→bundle / 风险分级+批准）
+**相关 RFC**：
+[RFC-0001 本源总线 OriginBus](RFC-0001-originbus.md)（State / Action / **Trust** 三通道 · 授权凭据 · Harness Adapter 责任）·
+[RFC-0005 本境协议 v0.2](RFC-0005-benjing-v0.2.md)（content_hash 乐观锁 / source 可复核 / actor provenance / bundle 编译）·
+[RFC-0006 北桥接口 & 南桥 Trust 模型](RFC-0006-northbridge-southbridge.md)（context.request→bundle / 风险分级+批准）
+
+---
+
+## 11. 已知的规范债务（诚实清单）
+
+本架构的铁律之一是「facts 必须带 verified」。同一条铁律适用于规范本身：**声明了但没有
+机制保障的，要写在这里，不要装作已经做到。**
+
+| # | 债务 | 实测证据 | 归属 |
+|---|---|---|---|
+| D1 | **同一协议有三份不一致的文本**：南桥语义散在 RFC-0006 §2 / ShadowOS 的 RFC-0004 / 2origin-harness 实现。RFC-0006 §2.3 的 `action.result` 没有 `replayed` / `diverged` / `footprint`，而 ShadowOS 参考实现有且已验证 | `grep -rn "replayed\|diverged\|footprint\|idempotency" 2origin-harness` **命中 0 个文件**；两份 RFC-0005 diff 出 231 行差异（6895 vs 15384 字节），`spec` 字段却相同 | 未定 —— 需要一个 spec registry：谁是 normative source，实现如何声明自己符合哪一版 |
+| D2 | **C6「经验不自动永久化」是形式检查冒充生命周期检查**。现行判据只查 learnings 有没有 `status` 和 `confidence` | 构造一条 `{status:"verified", confidence:0.99}` 的 learning（从没当过 candidate）→ 现行 C6 判 `bad=0`，**通过** | 学堂 / Learning Plane：需要记录**晋升事件**（何时从 candidate 变 verified、凭什么），否则无从区分"验证过的"和"一上来就写 verified 的" |
+| D3 | **Trust Plane 在 schema 里是空洞**。`envelope.schema.json` 的 `permissions` 字段注释写着"读写权限边界（Trust Plane）"，实际是 `additionalProperties: true` | 见 `schemas/envelope.schema.json` | RFC-0001 Trust Lane 落地后回填；在那之前**不要在文档里声称有 Trust Plane** |
+| D4 | **C2/C3 未纳入一键验证**。`conformance/run-tests.sh` 只自动化了 C1/C4/C5/C6/C7 | 脚本内 `C[0-9]` 去重结果 = C1 C4 C5 C6 C7 | 需要可复跑的跨 harness / 跨模型验证，否则这两条只是一次性演示 |
+
+> D2 与本境 v0.1 已实测的一个缺陷是**同一个病**：当时 `verify-state` 的 CHECK2 把 9 条
+> source 全换成一句胡话，判决仍是 VERIFIED——**存在性检查冒充验证**。
+> 修法也应当相同：判据要能被"故意造假"打穿，才算判据。
 
 ---
 
