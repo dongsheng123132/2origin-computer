@@ -2,89 +2,99 @@
 
 **本源计算架构 · An open architecture for persistent AI computers.**
 
-> 我们不造模型，我们想造一台 AI 计算机。
-> 模型是 CPU，但 CPU 从来不等于一台计算机。
+> We don't build models. We want to build an AI computer.
+> The model is the CPU — but a CPU is never a computer.
+>
+> 我们不造模型，我们想造一台 AI 计算机。模型是 CPU，但 CPU 从来不等于一台计算机。
 
 **Status:** Draft · Request for Comments · v0.1
 **License:** Apache-2.0
-**原理:** Model is replaceable. State survives. Actions are portable. Learning compounds.
-
-**中文：模型可换，状态不丢，动作可迁移，经验会复利。**
+**Principle:** Model is replaceable. State survives. Actions are portable. Learning compounds.
 
 ---
 
-## 问题
+## The Problem
 
-今天的 Agent 栈有很好的零件：模型（CPU）、Context Window（RAM）、MCP（总线）、Harness（内核）。
+Today's agent stack has good parts: models (CPU), Context Windows (RAM), MCP (buses), and harnesses (kernels). But they don't assemble into **one computer** — the motherboard, disk, drivers, and OS are missing.
 
-但它们拼不出**一台计算机**，因为缺的是把零件装成整机的**主板、硬盘、驱动和操作系统**。
+The universal pain point:
 
-最普遍的痛点是：
+> **Taught today, forgotten tomorrow. Learned on this task, restarting from grade one on the next Session.**
 
-> **今天教会，明天忘记。这个任务学会，下一个 Session 又从小学一年级开始。**
+Because agents persist **chat transcripts** (shadows), not **object state** (origin).
 
-因为 Agent 保存的是**聊天记录**（影子），不是**对象状态**（本象）。
+## The Architecture: An AI Computer
 
----
-
-## 架构：一台 AI 计算机
-
-| 层 | 对应 PC | 本体系 | 职责 |
+| Layer | PC analogue | This system | Responsibility |
 |---|---|---|---|
-| 智力 | CPU | **模型**（可替换） | 推理 |
-| 工作内存 | RAM | **Context Window** | 当前思考 |
-| 长期存储 | SSD | **本境 Benjing** | 这台 AI 学会的一切 |
-| 世界表示 | 显卡 | **本象 Benxiang** | 世界 → AI 可计算的对象 |
-| 动作 I/O | 南桥+驱动 | **影核 ActionParity** | 改变世界 |
-| 高速总线 | 北桥 | **OriginBus** | 状态 → Context |
-| 内核 | BIOS+Kernel | **Harness**（可替换） | 调度 |
-| 自学习 | 系统服务 | **学堂 Academy** | 经验沉淀为学历 |
-| 整机 | PC | **U-King** | 第一台参考实现 |
+| Intelligence | CPU | **Model** (swappable) | reasoning |
+| Working memory | RAM | **Context Window** | current thinking |
+| Long-term storage | SSD | **Benjing 本境** | everything the AI learned |
+| World representation | GPU | **Benxiang 本象** | world → AI-computable objects |
+| Action I/O | Southbridge | **ActionParity 影核** | changing the world |
+| High-speed bus | Northbridge | **OriginBus** | state → Context |
+| Kernel | BIOS + Kernel | **Harness** (swappable) | scheduling |
+| Self-learning | system service | **Academy 学堂** | experience → credentials |
+| The machine | PC | **U-King** | first reference implementation |
 
-> **本象保存世界，本境保存成长，影核改变世界。**
-> **北桥负责知，南桥负责行。**
+> **Benxiang saves the world. Benjing saves growth. ActionParity changes the world.**
+> **The Northbridge knows. The Southbridge acts.**
 
-完整闭环：`Observe → Think → Act → Verify → Learn`
+Full loop: `Observe → Think → Act → Verify → Learn`
 
----
-
-## 已实测验证（2026-08-08 · 首测）
-
-> 首测即通过 = 架构正确的验证信号（非刻意调参打榜）。
-
-### ✅ 跨 Session —— 关窗再开，任务续上
-独立全新 Claude Code 会话（`claude -p`，零铺垫），通过 SessionStart hook 自动收到 `task.origin.json` 摘要，**准确报出任务标题与目标**。
-
-### ✅ 跨 Harness —— 换引擎，学历不丢
-Claude Code 干一半（提炼 12 条事实）→ Codex（`codex exec`）只凭 `task.origin.json` + facts **零追问续作**。会话日志证实 Codex 从未问"任务是什么"。
-
-### ⏳ 已知限制：无头 Harness 的写权限
-Codex 沙箱只读（`-s workspace-write` 也未落盘，apply_patch 未暴露）。结论：**跨 harness 真正缺的不是状态格式，是 OriginBus Trust 层的统一写授权**——这是"南桥"的职责，已列为下一版必建组件。
+Read the full spec: **[RFC-0000 — 2Origin Computer Architecture](rfcs/RFC-0000-2origin-computer.en.md)** · [中文版](rfcs/RFC-0000-2origin-computer.md)
 
 ---
 
-## 仓库结构
+## Verified by first-run evidence (2026-08-08)
+
+> First-run pass = signal the architecture is right (not a benchmark-tuned result).
+
+### ✅ Cross-Session — close the window, resume the task
+A fresh, independent Claude Code session (`claude -p`, zero prior conversation) received the `task.origin.json` summary automatically via a SessionStart hook and **reported the task title and goal correctly**.
+
+### ✅ Cross-Harness — swap the engine, keep the credentials
+Claude Code did half the task (distilled 12 facts). Codex (`codex exec`) continued from only `task.origin.json` + facts with **zero re-asking**. Session logs confirm Codex never asked "what is the task?"
+
+### ⏳ Known limitation: write access for headless harnesses
+Codex's sandbox is read-only. The fix is a **Southbridge write action** — an audited MCP tool (`southbridge_write`, whitelist + audit log) injected into the harness. Prototype self-tests pass (write / path-traversal denial / audit log); injection into Codex confirmed. Final end-to-end test is blocked by an expired Codex login token (environment issue, not architecture). This is the Southbridge/Trust layer's job.
+
+---
+
+## Repository layout
 
 ```text
 2origin-computer/
-├── README.md              ← 你在这
+├── README.md                      ← you are here
 ├── rfcs/
-│   └── RFC-0000-2origin-computer.md   ← 完整架构 + Conformance 标准
-├── schemas/               ← 状态格式 JSON Schema（task.origin 等）
-├── examples/              ← 参考实现示例
-├── conformance/           ← 符合性测试清单
-├── LICENSE                ← Apache-2.0
-└── TRADEMARKS.md          ← 商标边界
+│   ├── RFC-0000-2origin-computer.en.md    ← full spec (EN)
+│   └── RFC-0000-2origin-computer.md       ← full spec (中文)
+├── schemas/                       ← state format JSON Schemas (task.origin, ...)
+├── examples/                      ← reference implementation examples
+├── conformance/                   ← conformance checklist
+├── LICENSE                        ← Apache-2.0
+└── TRADEMARKS.md                  ← trademark boundaries
 ```
+
+## How to contribute
+
+- Read [RFC-0000](rfcs/RFC-0000-2origin-computer.en.md)
+- Pick an open question from §10: Benjing layering / Northbridge Context compiler / Southbridge write authorization / Academy promotion thresholds
+- Open an Issue or PR
+
+## Trademarks
+
+U-King, 2Origin, Benxiang, Benjing, ActionParity, Academy, and OriginBus are trademarks — see [TRADEMARKS.md](TRADEMARKS.md). Code is Apache-2.0; the trademark license is separate.
 
 ---
 
-## 怎么参与
+## 中文速览
 
-- 读 [RFC-0000](rfcs/RFC-0000-2origin-computer.md)
-- 从讨论点（第 10 节）挑一个：本境分层 / 北桥 Context 编译 / 南桥写权限 / 学堂晋升门槛
-- 提 Issue 或 PR
+我们不造模型，我们想造一台 **AI 计算机**。模型是 CPU，但 CPU 从来不等于一台计算机。
 
-## 商标
+本架构定义持久 AI 计算机的一层：**模型可换，状态不丢，动作可迁移，经验会复利。** 模型/Context/Harness/MCP 都已是现成零件，缺的是把它们装成一整台机器的**主板、硬盘、驱动和操作系统**。
 
-U-King、2Origin、本象、本境、影核、学堂、OriginBus 为商标，见 [TRADEMARKS.md](TRADEMARKS.md)。代码 Apache-2.0 开源，商标不随代码授权。
+- **本象**保存世界，**本境**保存成长，**影核**改变世界
+- **北桥**负责知，**南桥**负责行
+- 闭环：`Observe → Think → Act → Verify → Learn`
+- **U-King** 是第一台参考整机
