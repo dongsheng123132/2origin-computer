@@ -186,6 +186,8 @@ What cross-harness really lacked was not the state format (Benxiang solves that)
 3. Minimal safe model for Southbridge write authorization (Trust/Approval)?
 4. Which Academy promotions should be automatic vs. human-reviewed?
 
+**Related RFC:** [RFC-0005 — Benjing v0.2](RFC-0005-benjing-v0.2.md) (content-hash optimistic lock / verifiable sources / actor provenance / bundle compilation)
+
 ---
 
 **License:** Apache-2.0

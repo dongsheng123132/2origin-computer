@@ -192,6 +192,8 @@ candidate → reviewed → verified → deprecated / superseded
 3. 南桥写权限（Trust/Approval）的最小安全模型怎么定？
 4. 学堂经验晋升的人工审核门槛，哪些该自动、哪些该人工？
 
+**相关 RFC**：[RFC-0005 本境协议 v0.2](RFC-0005-benjing-v0.2.md)（content_hash 乐观锁 / source 可复核 / actor provenance / bundle 编译）
+
 ---
 
 **License:** Apache-2.0
