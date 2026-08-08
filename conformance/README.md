@@ -36,15 +36,17 @@ A machine is **2Origin Compatible** only when it satisfies **all** checks below.
 
 ---
 
-## C3 — Cross-Model ✅
+## C3 — Cross-Model ⚠️
 
 > Switching models keeps the state usable — credentials do not reset.
 
-**Test:** same `task.origin.json`, two different models (`claude -p` with `--model deepseek-v4-flash` then `--model deepseek-v4-pro`), each fresh session asked "what is the task?" Compare answers.
+**Test:** same `task.origin.json`, two *different* model endpoints, each fresh session asked "what is the task?" Compare answers.
 
 **Pass =** both models report the same goal / state / next-steps without drift.
 
-**Evidence (2026-08-08):** flash and pro models both auto-loaded the same state via SessionStart hook and reported identical goal + current state + 3 next-steps in the same priority order — zero drift across model swap.
+**Honest status:** ⚠️ **Not yet truly verified.** The test machine has **only one real model endpoint** (`deepseek-v4-flash` via `api.deepseek.com`). Running `claude -p --model deepseek-v4-pro` only renamed the same endpoint — it was **not a real model swap**. The identical outputs proved the state loads consistently, but did **not** prove cross-model independence. True C3 requires a second real endpoint (e.g. GPT or Claude API). Do not count this as passed until a genuine second model reproduces the state.
+
+> Honesty note: initial draft claimed ✅. Correction: same-endpoint rename ≠ cross-model. Fixed per "first-run evidence must be truthful, not tuned."
 
 ---
 
@@ -98,10 +100,10 @@ A machine is **2Origin Compatible** only when it satisfies **all** checks below.
 |---|---|---|
 | C1 | Cross-Session | ✅ |
 | C2 | Cross-Harness | ✅ |
-| C3 | Cross-Model | ✅ |
+| C3 | Cross-Model | ⚠️ 待真实第二端点 |
 | C4 | Portable actions | ✅ |
 | C5 | Verifiable results | ✅ |
 | C6 | No auto-permanent learning | ✅ |
 | C7 | Auditable | ✅ |
 
-**7/7 可运行检查全部通过。** 2026-08-08 首测即全绿——架构正确的信号，非刻意调参打榜的结果。
+**6/7 通过，1 条诚实降级。** C3 初始标 ✅ 被纠正为 ⚠️：本机只有一个真实模型端点，`--model` 改名≠换模型。首测证据必须诚实，不为好看调状态。
