@@ -17,7 +17,7 @@ A machine is **2Origin Compatible** only when it satisfies **all** checks below.
 
 **Pass =** the fresh session reports the correct task without user explanation.
 
-**Evidence (2026-08-08):** fresh `claude -p` session auto-received `task.origin.json` summary and reported the title.
+**Evidence (2026-08-08):** fresh `claude -p` session auto-received `task.origin.json` summary and reported the title. **Extended to a simulated second machine:** copying the environment (CLAUDE.md, schemas, hooks, a task.origin) to a new directory and opening a fresh session there still auto-loads the state and reports the title — the credentials "transferred" with the environment (environment-is-image / AI can transfer schools).
 
 ---
 
