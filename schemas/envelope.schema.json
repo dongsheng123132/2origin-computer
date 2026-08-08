@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "2origin/envelope.schema.json",
+  "title": "envelope — 2Origin 统一对象信封",
+  "description": "所有重要对象（状态/记忆/动作/学习记录）共用的 Envelope。使状态可审计、可同步、可迁移、可验证。",
+  "type": "object",
+  "required": ["spec", "kind", "id", "version", "scope", "created_at", "content"],
+  "properties": {
+    "spec": { "const": "2origin/0.1", "description": "协议版本" },
+    "kind": { "type": "string", "description": "对象类型：task.origin / memory.record / action.intent / action.result / learning.candidate ..." },
+    "id": { "type": "string", "description": "对象唯一 ID，跨会话/跨机器不变" },
+    "version": { "type": "integer", "description": "版本号，每次修改 +1" },
+    "scope": { "type": "string", "description": "作用域：machine / user / project:xxx" },
+    "actor": { "type": "string", "description": "写者：agent:main / harness:codex / user / southbridge" },
+    "created_at": { "type": "string", "description": "ISO 时间" },
+    "updated_at": { "type": "string", "description": "ISO 时间" },
+    "provenance": {
+      "type": "array",
+      "description": "溯源链：trace id / 来源对象 id",
+      "items": { "type": "string" }
+    },
+    "permissions": {
+      "type": "object",
+      "description": "读写权限边界（Trust Plane）",
+      "additionalProperties": true
+    },
+    "content": {
+      "description": "负载：对象本体",
+      "type": "object"
+    }
+  }
+}

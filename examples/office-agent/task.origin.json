@@ -1,0 +1,66 @@
+{
+  "spec": "2origin/0.1",
+  "kind": "task.origin",
+  "id": "example.office-agent",
+  "title": "Office Agent 交接示例",
+  "goal": "验证学历跨 harness 继承：Claude Code 提炼事实 → Codex 读同一份 task.origin.json 接续产出清单。",
+  "version": 2,
+  "machine_id": "uking-local",
+  "harness": "claude-code",
+  "scope": "example:office-agent",
+  "created_at": "2026-08-08T16:00:00+08:00",
+  "updated_at": "2026-08-08T16:05:00+08:00",
+  "current_state": "STEP-A 完成（Claude Code 提炼 12 条实践为结构化 facts）。等待 STEP-B（Codex 读本状态接续生成落地清单）。",
+  "facts": [
+    {
+      "claim": "跨 harness 交接的唯一信物是 task.origin.json，不是聊天记录",
+      "verified": true,
+      "source": "demo/task2 实测",
+      "when": "2026-08-08T16:00:00+08:00"
+    },
+    {
+      "claim": "Codex 仅凭 task.origin.json + facts 可零追问续作",
+      "verified": true,
+      "source": "codex exec 会话日志",
+      "when": "2026-08-08T16:00:00+08:00"
+    }
+  ],
+  "decisions": [
+    {
+      "what": "harness 是外壳，学历在状态文件",
+      "why": "换 Claude Code / Codex / 未来 harness 都不丢学历",
+      "when": "2026-08-08T16:00:00+08:00"
+    }
+  ],
+  "actions": [
+    {
+      "verb": "file.read",
+      "target": "source-note.md",
+      "status": "done",
+      "result": "读入 12 条实践",
+      "evidence": "Read OK"
+    },
+    {
+      "verb": "file.write",
+      "target": "extracted-facts.md",
+      "status": "done",
+      "result": "12 条结构化 facts",
+      "evidence": "files exist"
+    }
+  ],
+  "artifacts": [
+    "extracted-facts.md"
+  ],
+  "verification": "STEP-A 产物已生成。",
+  "next_steps": [
+    "STEP-B（Codex）：读取本文件 + extracted-facts.md，生成 actionable-notes.md",
+    "STEP-C：对比前后产物，确认无漂移、无重复提问"
+  ],
+  "learnings": [
+    {
+      "lesson": "harness 是外壳，task.origin.json 是资产",
+      "confidence": 0.9,
+      "status": "candidate"
+    }
+  ]
+}

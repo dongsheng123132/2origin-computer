@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "2origin/task.origin.json",
+  "title": "task.origin — AI 任务状态对象（学堂闭环最小格式）",
+  "description": "一个正在进行的 AI 任务的持久状态。目标：关窗再开、换 harness/换模型后，任务靠这份状态续上，而不是靠聊天记录重放。",
+  "type": "object",
+  "required": [
+    "spec", "kind", "id", "goal", "version", "updated_at", "current_state", "next_steps"
+  ],
+  "properties": {
+    "spec": { "const": "2origin/0.1", "description": "协议版本，冻结，勿改" },
+    "kind": { "const": "task.origin", "description": "对象类型" },
+    "id": { "type": "string", "description": "任务唯一 ID，跨会话不变" },
+    "title": { "type": "string", "description": "任务标题" },
+    "goal": { "type": "string", "description": "任务目标（一句话，模型换脑也能看懂）" },
+    "version": { "type": "integer", "description": "状态版本号，每次保存 +1" },
+    "machine_id": { "type": "string", "description": "学籍归属机器（2Origin Computer 的 identity，见 Boot Manifest）" },
+    "harness": { "type": "string", "description": "上次写入的 harness（claude-code / codex / openhands），兼容性标记" },
+    "scope": { "type": "string", "description": "作用域，如 project:shadowos" },
+    "created_at": { "type": "string", "description": "ISO 时间" },
+    "updated_at": { "type": "string", "description": "ISO 时间" },
+
+    "current_state": {
+      "type": "string",
+      "description": "当前状态的一句话描述。不写聊天过程，写『世界此刻是什么样』。"
+    },
+    "facts": {
+      "type": "array",
+      "description": "验证过的事实，不是会话里说过的话",
+      "items": {
+        "type": "object",
+        "required": ["claim", "verified"],
+        "properties": {
+          "claim": { "type": "string" },
+          "verified": { "type": "boolean", "description": "是否被本象观察/测试证实" },
+          "source": { "type": "string", "description": "证据来源：文件/命令/trace id" },
+          "when": { "type": "string" }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "关键决策及理由（commit log，不是聊天记录）",
+      "items": {
+        "type": "object",
+        "required": ["what", "why"],
+        "properties": {
+          "what": { "type": "string" },
+          "why": { "type": "string" },
+          "when": { "type": "string" }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "description": "已执行的动作（影核 action 记录，含结果）",
+      "items": {
+        "type": "object",
+        "required": ["verb", "status"],
+        "properties": {
+          "verb": { "type": "string", "description": "如 document.save / file.write" },
+          "target": { "type": "string" },
+          "status": { "enum": ["done", "failed", "skipped"] },
+          "result": { "type": "string" },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "产出的文件/产物路径",
+      "items": { "type": "string" }
+    },
+    "verification": {
+      "type": "string",
+      "description": "对整体完成度的验证结论：已验证到什么程度，还差什么"
+    },
+    "next_steps": {
+      "type": "array",
+      "description": "下一步清单。换模型后靠这个接着干",
+      "items": { "type": "string" }
+    },
+    "learnings": {
+      "type": "array",
+      "description": "本次会话沉淀的经验（学堂原料）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lesson": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "status": { "enum": ["candidate", "verified", "deprecated"] }
+        }
+      }
+    }
+  }
+}
