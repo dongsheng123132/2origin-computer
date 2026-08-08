@@ -30,9 +30,9 @@ A machine is **2Origin Compatible** only when it satisfies **all** checks below.
 2. Harness B (`codex exec`, etc.) continues from only that state + facts.
 3. Confirm B never asks "what is the task?"
 
-**Pass =** B continues without re-asking.
+**Pass =** B continues without re-asking, and can also **persist** via the Southbridge write path.
 
-**Evidence (2026-08-08):** Claude Code → Codex handoff, zero re-asking (session logs).
+**Evidence (2026-08-08):** Claude Code → Codex handoff, zero re-asking (session logs). **Full loop:** Codex persisted its output itself via the Southbridge MCP tool (`southbridge_write` → `demo/southbridge-e2e.md`, 25 bytes), closing the cross-harness handoff end-to-end without a host harness writing on its behalf.
 
 ---
 
@@ -94,7 +94,7 @@ Both auto-loaded the same `task.origin.json` via SessionStart hook and reported 
 
 **Test:** confirm a write action leaves an audit trail (actor, action, target, timestamp).
 
-**Evidence (2026-08-08):** Southbridge MCP logs every `southbridge_write` (done / denied) to `audit.log`.
+**Evidence (2026-08-08):** Southbridge MCP logs every `southbridge_write` (done / denied) to `audit.log`. End-to-end: Codex's `southbridge_write` of `demo/southbridge-e2e.md` is recorded (`done`, 25 bytes); a path-traversal attempt (`evil/../shadow.txt`) is recorded as `denied`. Every write leaves an auditable trail.
 
 ---
 

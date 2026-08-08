@@ -162,8 +162,12 @@ A fresh, independent Claude Code session (`claude -p`, zero prior conversation) 
 ### B — Cross-Harness ✅
 Claude Code did STEP-A (distilled 12 facts into `extracted-facts.md`, updated state). Codex (`codex exec`) continued STEP-B from only `task.origin.json` + facts with **zero re-asking**. Session logs confirm Codex never asked "what is the task?"
 
-### C — Known limitation: write access for headless harnesses ⏳
-Codex's sandbox is read-only; `-s workspace-write` still did not persist (apply_patch not exposed). Conclusion: what cross-harness really lacks is not the state format (Benxiang solves that) but a **unified write authorization in the OriginBus Trust layer** — the Southbridge's job. A southbridge MCP server prototype exists (`southbridge_write`, whitelist + audit log; self-tests passed; injection into Codex confirmed). The final end-to-end write test is blocked by an expired Codex login token (environment issue, not architecture).
+### C — Southbridge write access: SOLVED ✅ (was a known limitation)
+What cross-harness really lacked was not the state format (Benxiang solves that) but a **unified write authorization in the OriginBus Trust layer** — the Southbridge's job. A **Southbridge MCP server** (`southbridge_write`) provides exactly that: a whitelisted, audited write path for headless harnesses.
+
+**End-to-end verified (2026-08-08):** Codex (`codex exec --approve-for-me`) called `southbridge_write` to persist `demo/southbridge-e2e.md` → `OK: wrote 25 bytes`. The audit log records the action (actor, action, target, bytes, timestamp). Whitelist check denied a path-traversal attempt (`evil/../shadow.txt`) earlier — the Trust layer blocks what it should.
+
+**Why other approaches failed:** Codex's read-only sandbox blocks shell writes; `-s workspace-write` doesn't expose apply_patch; plain `codex exec` cancels MCP calls for lack of an approval channel. The Southbridge's MCP tool + `--approve-for-me` closes the loop. The earlier blocker (expired Codex login token) was an environment issue, now resolved.
 
 ---
 
