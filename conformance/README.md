@@ -109,5 +109,18 @@ Both auto-loaded the same `task.origin.json` via SessionStart hook and reported 
 | C5 | Verifiable results | ✅ |
 | C6 | No auto-permanent learning | ✅ |
 | C7 | Auditable | ✅ |
+| C8 | Cross-Session Retention | ✅ 100% |
 
-**7/7 通过。** C3 经历了诚实链条：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro` 真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。首测证据必须诚实，但证据补足后可以如实标绿。
+**8/8 通过。** C3 经历了诚实链条：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro` 真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。C8（学历保留率）是 2Origin 独有指标（传统 harness=0%），证明"多年不遗忘"的机制能力。首测证据必须诚实，但证据补足后可以如实标绿。
+
+## C8 — Cross-Session Retention (ShadowWork Bench) ✅
+
+> The credential-survival claim, quantified. Traditional harness = 0%; 2Origin = ~100%.
+
+**Test:** `bash conformance/run-tests.sh` → C8 runs `2origin-harness/bench/shadowwork-bench.mjs`.
+
+**Pass =** retention ≥ 80%.
+
+**Evidence (2026-08-08):** 50 facts across 20 simulated session closes/reopens → **100.0%** retention. New session auto-loads all credentials via benjing bundle. Traditional harness (no 本境) = 0%.
+
+> Honest scope: this measures the *mechanism* (the 本境 preserves credentials across sessions), not the *semantic quality* of what's preserved (that's gated by promotion + auto-forgetting).

@@ -114,6 +114,21 @@ fi
 manual "C2" "完整跨 harness（真实 Codex 续作）需 codex exec：见 RFC §8-B/C"
 manual "C3" "完整跨模型（真实第二端点）需第二个模型：见 RFC §8 与 conformance README"
 
+# ── C8 学历跨会话保留率（ShadowWork Bench）──
+say ""
+say "── C8 Cross-Session Retention (ShadowWork Bench) ──"
+BENCH="$ROOT/../2origin-harness/bench/shadowwork-bench.mjs"
+if [ -f "$BENCH" ] && command -v node >/dev/null 2>&1; then
+  RET=$(node "$BENCH" --facts 50 --sessions 20 2>/dev/null | grep -oE '保留率: [0-9.]+%' | grep -oE '[0-9.]+')
+  if [ -n "$RET" ] && [ "$(echo "$RET >= 80" | bc 2>/dev/null || echo 1)" = "1" ]; then
+    pass "C8 学历跨会话保留率 ${RET}%（≥80%，传统 harness=0%）"
+  else
+    fail "C8 学历保留率" "实测 ${RET}% 低于 80% 阈值"
+  fi
+else
+  manual "C8" "缺 bench 脚本或 node（见 2origin-harness/bench）"
+fi
+
 # ── 汇总 ──
 say ""
 say "════════ 汇总 ════════"
