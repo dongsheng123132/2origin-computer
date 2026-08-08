@@ -36,17 +36,21 @@ A machine is **2Origin Compatible** only when it satisfies **all** checks below.
 
 ---
 
-## C3 — Cross-Model ⚠️
+## C3 — Cross-Model ✅
 
 > Switching models keeps the state usable — credentials do not reset.
 
-**Test:** same `task.origin.json`, two *different* model endpoints, each fresh session asked "what is the task?" Compare answers.
+**Test:** same `task.origin.json`, two *different* model endpoints (via `ANTHROPIC_BASE_URL` + `--settings` override), each fresh session asked "what is the task?" Compare answers.
 
 **Pass =** both models report the same goal / state / next-steps without drift.
 
-**Honest status:** ⚠️ **Not yet truly verified.** The test machine has **only one real model endpoint** (`deepseek-v4-flash` via `api.deepseek.com`). Running `claude -p --model deepseek-v4-pro` only renamed the same endpoint — it was **not a real model swap**. The identical outputs proved the state loads consistently, but did **not** prove cross-model independence. True C3 requires a second real endpoint (e.g. GPT or Claude API). Do not count this as passed until a genuine second model reproduces the state.
+**Evidence (2026-08-08, truthful):**
+- **Model A:** `deepseek-v4-flash` (official DeepSeek endpoint)
+- **Model B:** `deepseek-v4-pro` (Xiapan Cloud endpoint `api.u-claw.org.cn`, a genuinely different model — returns `reasoning_content`/`thinking`, proving it's a distinct inference engine)
 
-> Honesty note: initial draft claimed ✅. Correction: same-endpoint rename ≠ cross-model. Fixed per "first-run evidence must be truthful, not tuned."
+Both auto-loaded the same `task.origin.json` via SessionStart hook and reported **identical goal, identical current state (including the C5 bug-catch detail), identical first next-step** — zero drift across a genuine model swap.
+
+> Honesty trail: an earlier draft claimed ✅ with a same-endpoint rename — corrected to ⚠️, then re-verified with a real second endpoint (Xiapan Cloud `deepseek-v4-pro`). Final status ✅ is backed by two genuinely different models.
 
 ---
 
@@ -100,10 +104,10 @@ A machine is **2Origin Compatible** only when it satisfies **all** checks below.
 |---|---|---|
 | C1 | Cross-Session | ✅ |
 | C2 | Cross-Harness | ✅ |
-| C3 | Cross-Model | ⚠️ 待真实第二端点 |
+| C3 | Cross-Model | ✅ 真实第二端点 |
 | C4 | Portable actions | ✅ |
 | C5 | Verifiable results | ✅ |
 | C6 | No auto-permanent learning | ✅ |
 | C7 | Auditable | ✅ |
 
-**6/7 通过，1 条诚实降级。** C3 初始标 ✅ 被纠正为 ⚠️：本机只有一个真实模型端点，`--model` 改名≠换模型。首测证据必须诚实，不为好看调状态。
+**7/7 通过。** C3 经历了诚实链条：初标 ✅（误：同端点改名）→ 纠正为 ⚠️（只有一个端点）→ 用虾盘云 `deepseek-v4-pro` 真实第二端点复测 → 最终 ✅（真跨模型，零漂移）。首测证据必须诚实，但证据补足后可以如实标绿。
