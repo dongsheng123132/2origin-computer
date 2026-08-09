@@ -151,7 +151,7 @@ fi
 # 真打模型一次 474 次调用、约 600 万输入 token，要花钱，所以必须显式 SHADOWWORK_LIVE=1。
 # 「会悄悄花钱的 conformance 项」本身就是缺陷，这里把花钱做成显式开关。
 say ""
-say "── C10 State vs Transcript (ShadowWork Bench spec 0.3) ──"
+say "── C10 State vs Transcript (ShadowWork Bench spec 0.4) ──"
 V2="$ROOT/../2origin-harness/bench/shadowwork-bench-live.mjs"
 if [ -f "$V2" ] && command -v node >/dev/null 2>&1; then
   DRY=$(node "$V2" --dry-run 2>/dev/null)
@@ -176,6 +176,41 @@ if [ -f "$V2" ] && command -v node >/dev/null 2>&1; then
   fi
 else
   manual "C10" "缺 shadowwork-bench-live.mjs 或 node（见 2origin-harness/bench）"
+fi
+
+# ── C11 外部对照（对照组里必须有一个不是我们自己写的实现）──
+# 为什么是一条判据而不是一句自觉：C10 到 spec 0.3 为止的三个对照臂——尾部截断、
+# 自制 summary、自写词法 RAG——全部由我们自己实现。跟自己写的东西比出来的
+# 「更有效」，是「自证」在 benchmark 层的最后一处藏身点：每个部件都真实、每个
+# 数字都可复算，但对照组的天花板是我们自己的手艺。所以这条判据检查的是
+# 「有没有第三方实现在场」，不是「分数好不好看」。
+say ""
+say "── C11 External Baseline (third-party memory system) ──"
+M0="$ROOT/../2origin-harness/bench/mem0_arm.py"
+VB="$ROOT/../2origin-harness/bench/shadowwork-bench-live.mjs"
+if [ -f "$VB" ]; then
+  HAS_ARM=$(grep -c "mem0" "$VB" 2>/dev/null || echo 0)
+  STATS=$(ls "$ROOT"/../2origin-harness/bench/cache/mem0-*.stats.json 2>/dev/null | head -1)
+  if [ ! -f "$M0" ] || [ "$HAS_ARM" -lt 1 ]; then
+    fail "C11 外部对照" "bench 里没有第三方 memory 系统的臂——对照组全是自己写的，结论只跟自己的手艺比"
+  elif [ -z "$STATS" ]; then
+    manual "C11" "第三方对照臂已接入但记忆库未建（跑 node bench/shadowwork-bench-live.mjs --arms mem0）"
+  else
+    N_MEM=$(grep -oE '"memories_in_store": [0-9]+' "$STATS" | grep -oE "[0-9]+" | tail -1)
+    N_EMPTY=$(grep -c '"empty_batches": \[\]' "$STATS" || echo 0)
+    KEEP=$(grep -c '"keep_source_language": true' "$STATS" || echo 0)
+    if [ -z "$N_MEM" ] || [ "$N_MEM" -lt 1 ]; then
+      fail "C11 空对照" "第三方记忆库是空的——空对照组比没有对照更糟，它看起来像个对照"
+    elif [ "$N_EMPTY" -lt 1 ]; then
+      fail "C11 语料完整性" "有批次抽取返回 0 条记忆，那段语料从对照组的记忆里消失了（见 stats 的 empty_batches）"
+    elif [ "$KEEP" -lt 1 ]; then
+      fail "C11 语言公平" "第三方对照跑在默认配置下会把中文语料翻成英文存，等于我们亲手削弱对照组"
+    else
+      pass "C11 外部对照在场：mem0 记忆库 $N_MEM 条，无空批次，保留源语言"
+    fi
+  fi
+else
+  manual "C11" "缺 shadowwork-bench-live.mjs（见 2origin-harness/bench）"
 fi
 
 # ── 汇总 ──
