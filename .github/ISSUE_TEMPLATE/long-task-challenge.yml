@@ -1,0 +1,57 @@
+name: Submit a long-running task challenge
+description: 提交传统 AI 做不好、做不完或做着做着会失忆的真实任务
+title: "[Challenge] "
+labels:
+  - challenge
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not post passwords, personal data, trade secrets, or materials you are not authorized to share.
+        提交 Issue 不代表项目已经接榜。
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / 任务目标
+      description: What real artifact should exist when this task is complete?
+      placeholder: 例如：完成一份可交付、可复核的 300 页技术方案。
+    validations:
+      required: true
+  - type: textarea
+    id: why_long
+    attributes:
+      label: Why is this a long-running task? / 为什么是长程任务
+      description: Why can it not be completed in one ordinary chat session?
+    validations:
+      required: true
+  - type: textarea
+    id: materials
+    attributes:
+      label: Inputs and scale / 输入材料与规模
+      description: Describe types and approximate scale. Do not paste sensitive content here.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria / 成功标准
+      description: How can reality prove completion instead of trusting the AI's own report?
+    validations:
+      required: true
+  - type: dropdown
+    id: publicity
+    attributes:
+      label: Disclosure boundary / 可公开范围
+      options:
+        - Prompt, process, and results may be public / 全公开
+        - Publish only a redacted process / 过程脱敏
+        - Publish only mutually approved conclusions / 只公开双方确认的结论
+    validations:
+      required: true
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Authorization / 授权确认
+      options:
+        - label: I am authorized to provide the described materials and understand that submission is not acceptance.
+          required: true

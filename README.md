@@ -13,6 +13,30 @@
 
 ---
 
+![Long-Term AI Computer Open Challenge](assets/long-term-ai-computer-challenge.png)
+
+## Open Challenge · 长程 AI 计算机正式接榜
+
+Traditional AI can start many tasks. The harder question is whether it can still know the current
+state after days, sessions, model swaps, failed actions, and retracted decisions.
+
+We are opening the architecture to real long-running tasks: large document projects, multi-session
+software work, persistent research, multimodal archives, and anything that makes an agent forget
+what is true halfway through.
+
+公司很小，胃口很大；宣传部只有一个人，所以锣可能敲得响了一点。我们不要求你先相信：
+代码、实验、失败和撤回都公开。欢迎出题，也欢迎把这条路线打穿。
+
+- **[Read the challenge announcement / 接榜令](https://blog.hequbing.com/post?slug=long-term-ai-computer-challenge)**
+- **[Submit a long-running task / 提交挑战](https://github.com/dongsheng123132/2origin-computer/issues/new?template=long-task-challenge.yml)**
+- [Challenge rules](docs/challenge-rules.md) · [Evidence and limits](docs/evidence-and-limits.md)
+
+> “World-first long-term AI computer prototype” is the initiator's falsifiable public claim,
+> not a third-party certification. Earlier comparable public implementations are welcome as evidence;
+> verified counterexamples will change the wording in public.
+
+---
+
 ## The Problem
 
 Today's agent stack has good parts: models (CPU), Context Windows (RAM), MCP (buses), and harnesses (kernels). But they don't assemble into **one computer** — the motherboard, disk, drivers, and OS are missing.
@@ -66,6 +90,7 @@ Codex's sandbox is read-only. The fix is a **Southbridge write action** — an a
 ```text
 2origin-computer/
 ├── README.md                      ← you are here
+├── docs/                          ← challenge rules and evidence boundaries
 ├── rfcs/
 │   ├── RFC-0000-2origin-computer.en.md    ← full spec (EN)
 │   └── RFC-0000-2origin-computer.md       ← full spec (中文)
