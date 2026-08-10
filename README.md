@@ -29,17 +29,17 @@ Because agents persist **chat transcripts** (shadows), not **object state** (ori
 |---|---|---|---|
 | Intelligence | CPU | **Model** (swappable) | reasoning |
 | Working memory | RAM | **Context Window** | current thinking |
-| Long-term storage | SSD | **Benjing 本境** | everything the AI learned |
-| Sensing | input device | **Quxiang 取象** | reads the world — and never receives an expectation |
+| Long-term storage | SSD | **Benli 本历** | everything the AI learned |
+| Sensing | sensor hub (Southbridge I/O, in) | **Quxiang 取象** | reads the world — and never receives an expectation |
 | World representation | GPU | **Benxiang 本象** | world → AI-computable objects |
-| Machine environment | firmware / device tree | **Benqi 本器** | what this machine has and can run |
+| Machine environment | CMOS / firmware settings | **Benjing 本境** | what this machine has and can run |
 | Action I/O | Southbridge | **ActionParity 影核** | changing the world |
 | High-speed bus | Northbridge | **OriginBus** | state → Context |
 | Kernel | BIOS + Kernel | **Harness** (swappable) | scheduling |
 | Self-learning | system service | **Academy 学堂** | experience → credentials |
 | The machine | PC | **U-King** | first reference implementation |
 
-> **Quxiang sees the world. Benxiang saves it. Benjing saves growth. ActionParity changes it.**
+> **Quxiang sees the world. Benxiang saves it. Benli saves growth. ActionParity changes it.**
 > **The Northbridge knows. The Southbridge acts.**
 
 > **Naming:** Quxiang (sensing) and Benxiang (representation) were one name until
@@ -100,7 +100,7 @@ U-King, 2Origin, Benxiang, Benjing, ActionParity, Academy, and OriginBus are tra
 
 本架构定义持久 AI 计算机的一层：**模型可换，状态不丢，动作可迁移，经验会复利。** 模型/Context/Harness/MCP 都已是现成零件，缺的是把它们装成一整台机器的**主板、硬盘、驱动和操作系统**。
 
-- **取象**看见世界，**本象**保存世界，**本境**保存成长，**影核**改变世界
+- **取象**看见世界，**本象**保存世界，**本历**保存成长，**影核**改变世界
   （取象/本象曾共用一个名字，裁决见 [`NAMING-DECISION.md`](NAMING-DECISION.md)：先取象，后立象）
 - **北桥**负责知，**南桥**负责行
 - 闭环：`Observe → Think → Act → Verify → Learn`

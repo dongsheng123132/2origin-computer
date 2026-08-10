@@ -46,12 +46,48 @@ implementation).
 
 ## 1. The decision
 
+> **Revised in v0.2:** `Benqi` is retired, `Benli` takes the state layer, and `Benjing` returns to
+> the environment layer. Rationale in §1.1.
+
 | Role | Chinese | English | Home repo | What it actually is |
 |---|---|---|---|---|
+| The machine | **本源 AI 计算机** | 2Origin AI Computer | — | The whole machine. **The machine's name takes no component's name** — a part standing in for the whole is, in this system's own vocabulary, a projection impersonating the origin |
 | Representation | **本象** Benxiang | **Origin IR** | `本象协议` | Persistent representation of the world: objects / relations / payloads / states / constraints / provenance / **limits** |
 | Sensing | **取象** Quxiang | **Sensor** | `ShadowOS` | The single implementation of "look at the world". Iron rule: `observe()` **never** receives an expectation |
-| Learned state | **本境** Benjing | **State Layer** | `ShadowOS` | Durable task state: optimistic lock / recheckable sources / actor provenance |
-| Environment | **本器** Benqi | **Machine Profile** | `本境协议` (uenv) | What this machine has and can run: tools / versions / proxy / can-it-build-this-project |
+| Learned state | **本历** Benli | **State Layer** | `ShadowOS` | Durable task state: optimistic lock / recheckable sources / actor provenance |
+| Environment | **本境** Benjing | **Machine Profile** | `本境协议` (uenv) | What this machine has and can run: tools / versions / proxy / can-it-build-this-project |
+
+### 1.1 Why v0.1's "Benjing = learned state" was overturned
+
+v0.1 assigned Benjing to the state layer and, in the same section, recorded the evidence against
+itself:
+
+> "Etymologically 境 leans slightly toward *environment*. **This point argues against the
+> decision** and is recorded as such — it loses to (1)."
+
+That recorded counter-evidence was later cited to overturn the decision. This is what writing
+down the inconvenient point is *for*. 历 means *record, history, what one has been through* —
+literally a curriculum vitae; 境 means *environment* — literally what uenv manages. Once each word
+sits where it belongs:
+
+- `本历` shares the character 历 with 学历 ("academic record"); Chinese readers need no gloss.
+- **`本器` retires with it.** That name existed only to work around Benjing being occupied.
+  **A patch disappearing is a signal the solution is right**: if a proposal needs a name whose sole
+  purpose is dodging a collision, the collision probably wasn't solved.
+
+### 1.2 Why the machine is not called "Benxiang AI Computer"
+
+Seriously considered, with a replacement ready for the representation layer (**立象** *Lixiang* —
+forming the *Xici*'s own verb pair: 观物取象 → 立象以尽意). Rejected, for two reasons:
+
+1. **`本象协议` is the only component in this system pinned down by an external contract** —
+   87 language-neutral conformance vectors, a second implementation in Python, 13 mutation checks.
+   It is the only thing where a stranger can write their own implementation and prove conformance
+   on the spot. The real cost of renaming it is not 945 text substitutions; it is **the semantic
+   continuity of those 87 vectors**, whose value comes precisely from not moving.
+2. **A machine name occupying a component name is a part impersonating the whole** — in this
+   system's vocabulary, the same shape as a projection impersonating the origin. `2Origin` is a
+   neutral name for the whole and competes with no component.
 
 ### The Chinese names are a matched set, not a coincidence
 
@@ -184,5 +220,68 @@ This is not a compromise. It follows from what an evidence chain *is*.
   listening; this is a one-shot call).
 - **Do not** translate Benjing as `Environment` — that is Benqi. Benjing is the `State Layer`.
 - The naming freeze (no changes within one quarter) now covers:
-  2Origin / Benxiang / **Quxiang** / Benjing / **Benqi** / ActionParity / Northbridge /
+  2Origin / Benxiang / **Quxiang** / **Benli** / Benjing / ActionParity / Northbridge /
   Southbridge / Academy.
+
+---
+
+## 5. Names must also go candidate → verified
+
+### 5.1 The disease
+
+Count the names already in play: Benxiang, Benjing, Benli, Quxiang, ActionParity, Southbridge,
+Northbridge, Academy, task state, learning, conformance judgment, out-of-band, anchoring, Origin IR,
+bugscope, ShadowBench…
+
+Now count, by this system's own standard ("one implementation passing its own tests does not
+prove a protocol exists" — `本象协议/spec/conformance/README.md`), how many are **externally
+verifiable**: **one**. Every other is a house implementation running house tests.
+
+> **Naming has outrun verification. Names are free; judgments are expensive.**
+> Every additional name adds one more component that *appears* to exist.
+
+This is the same disease the Academy audit found — **58 learnings, 49 self-declared `verified`,
+0 reproducible by anyone** — recurring at the naming layer, which has had no exam at all.
+
+### 5.2 The rule (isomorphic to the Academy's learning lifecycle)
+
+> **To define a name is to make an unverified existence claim.**
+> "We have an X layer" has the same shape as bugscope A1, *presence ≠ verification*: naming it
+> declares it exists.
+
+| State | Condition |
+|---|---|
+| `candidate` | Proposed, but **no judgment turns red if the component is absent** |
+| `verified` | A judgment in some `verify-*.mjs` pins it; remove the component and that judgment fails |
+
+Symmetric with the Academy: **`verified` is granted by a judgment, never by the author.**
+
+### 5.3 Current gaps stay `candidate` — no official names issued
+
+After walking the motherboard, these slots are empty. Per §5.2 they **do not get names**:
+
+| Gap | Observed failure it maps to | State |
+|---|---|---|
+| Memory protection / ownership | **Concurrent sessions eating task state (observed in practice)** | `candidate` — the only one backed by a real failure |
+| Watchdog | Hung task / infinite loop, no auto-recovery | `candidate` — no observed case |
+| Budget management | Token budget only half-handled, inside the Northbridge | `candidate` — no observed case |
+| ~~DMA~~ | — | **withdrawn** |
+
+### 5.4 One gap withdrawn, and why
+
+The first draft listed **DMA** ("bulk data transfer bypassing the model"), copied from the
+motherboard checklist. **Withdrawn.**
+
+DMA's value is bypassing the CPU. In an LLM system, moving data without the model *is just a
+function call* — it needs no component name. It appeared on the list only because a motherboard has one.
+
+> **A metaphor that generates questions also conceals them.** The motherboard is the physical
+> realization of the von Neumann architecture, whose premises are that instructions and data are
+> separable, control flow is predictable, and state is exactly copyable. **Large models satisfy
+> none of the three.** Filling in a motherboard checklist yields components that mean nothing here.
+
+**So the test is not "does a motherboard have one", but "does it map to a failure actually
+observed".** Memory protection passes; DMA does not.
+
+This section is the first time the system turns its method on its own names. It has audited facts,
+learnings, actions and time — never its vocabulary.
