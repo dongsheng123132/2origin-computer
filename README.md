@@ -29,17 +29,17 @@ Because agents persist **chat transcripts** (shadows), not **object state** (ori
 |---|---|---|---|
 | Intelligence | CPU | **Model** (swappable) | reasoning |
 | Working memory | RAM | **Context Window** | current thinking |
-| Long-term storage | SSD | **Benli 本历** | everything the AI learned |
+| Long-term storage | SSD | **Xueji 学籍** | everything the AI learned |
 | Sensing | sensor hub (Southbridge I/O, in) | **Quxiang 取象** | reads the world — and never receives an expectation |
 | World representation | GPU | **Benxiang 本象** | world → AI-computable objects |
 | Machine environment | CMOS / firmware settings | **Benjing 本境** | what this machine has and can run |
-| Action I/O | Southbridge | **ActionParity 影核** | changing the world |
-| High-speed bus | Northbridge | **OriginBus** | state → Context |
+| Action I/O | Southbridge I/O, out | **Action Kernel 影核** | changing the world |
+| High-speed bus | Northbridge | **Northbridge 北桥** | state → Context |
 | Kernel | BIOS + Kernel | **Harness** (swappable) | scheduling |
 | Self-learning | system service | **Academy 学堂** | experience → credentials |
 | The machine | PC | **U-King** | first reference implementation |
 
-> **Quxiang sees the world. Benxiang saves it. Benli saves growth. ActionParity changes it.**
+> **Quxiang sees the world. Benxiang saves it. Xueji keeps the record. The Action Kernel changes it.**
 > **The Northbridge knows. The Southbridge acts.**
 
 > **Naming:** Quxiang (sensing) and Benxiang (representation) were one name until
@@ -90,7 +90,7 @@ Codex's sandbox is read-only. The fix is a **Southbridge write action** — an a
 
 ## Trademarks
 
-U-King, 2Origin, Benxiang, Benjing, ActionParity, Academy, and OriginBus are trademarks — see [TRADEMARKS.md](TRADEMARKS.md). Code is Apache-2.0; the trademark license is separate.
+U-King, 2Origin, Benxiang, Benjing, ActionParity, Academy, and OriginBus are trademarks (brand names; the technical terms are Origin IR / Sensor / State Layer / Machine Profile / Action Kernel / Northbridge) — see [TRADEMARKS.md](TRADEMARKS.md). Code is Apache-2.0; the trademark license is separate.
 
 ---
 
@@ -100,7 +100,7 @@ U-King, 2Origin, Benxiang, Benjing, ActionParity, Academy, and OriginBus are tra
 
 本架构定义持久 AI 计算机的一层：**模型可换，状态不丢，动作可迁移，经验会复利。** 模型/Context/Harness/MCP 都已是现成零件，缺的是把它们装成一整台机器的**主板、硬盘、驱动和操作系统**。
 
-- **取象**看见世界，**本象**保存世界，**本历**保存成长，**影核**改变世界
+- **取象**看见世界，**本象**保存世界，**学籍**保存成长，**影核**改变世界（英文 Action Kernel）
   （取象/本象曾共用一个名字，裁决见 [`NAMING-DECISION.md`](NAMING-DECISION.md)：先取象，后立象）
 - **北桥**负责知，**南桥**负责行
 - 闭环：`Observe → Think → Act → Verify → Learn`

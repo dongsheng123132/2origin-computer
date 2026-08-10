@@ -46,15 +46,15 @@ implementation).
 
 ## 1. The decision
 
-> **Revised in v0.2:** `Benqi` is retired, `Benli` takes the state layer, and `Benjing` returns to
-> the environment layer. Rationale in §1.1.
+> **Revised twice:** v0.2 retired `Benqi` and returned `Benjing` to the environment layer (§1.1);
+> v0.3 named the state layer `Xueji`, voiding `Benli` (§1.1a).
 
 | Role | Chinese | English | Home repo | What it actually is |
 |---|---|---|---|---|
 | The machine | **本源 AI 计算机** | 2Origin AI Computer | — | The whole machine. **The machine's name takes no component's name** — a part standing in for the whole is, in this system's own vocabulary, a projection impersonating the origin |
 | Representation | **本象** Benxiang | **Origin IR** | `本象协议` | Persistent representation of the world: objects / relations / payloads / states / constraints / provenance / **limits** |
 | Sensing | **取象** Quxiang | **Sensor** | `ShadowOS` | The single implementation of "look at the world". Iron rule: `observe()` **never** receives an expectation |
-| Learned state | **本历** Benli | **State Layer** | `ShadowOS` | Durable task state: optimistic lock / recheckable sources / actor provenance |
+| Learned state | **学籍** Xueji | **State Layer** | `ShadowOS` | Registry of task states: optimistic lock / recheckable sources / actor provenance. **The layer is 学籍 (the register); an instance is 学历 (the record)** |
 | Environment | **本境** Benjing | **Machine Profile** | `本境协议` (uenv) | What this machine has and can run: tools / versions / proxy / can-it-build-this-project |
 
 ### 1.1 Why v0.1's "Benjing = learned state" was overturned
@@ -70,7 +70,6 @@ down the inconvenient point is *for*. 历 means *record, history, what one has b
 literally a curriculum vitae; 境 means *environment* — literally what uenv manages. Once each word
 sits where it belongs:
 
-- `本历` shares the character 历 with 学历 ("academic record"); Chinese readers need no gloss.
 - **`本器` retires with it.** That name existed only to work around Benjing being occupied.
   **A patch disappearing is a signal the solution is right**: if a proposal needs a name whose sole
   purpose is dodging a collision, the collision probably wasn't solved.
@@ -97,7 +96,8 @@ already stand in sequence:
 ```
 观物取象   "observe things, take the image"     → Quxiang (sensing)      ← input
 立象以尽意 "establish the image to exhaust meaning" → Benxiang (representation) ← the IR
-形而下者谓之器 "what has form is called a vessel"   → Benqi (the machine itself)
+(A third, Benqi, was drafted from "what has form is called a vessel" and retired in §1.1a —
+ fitting the source text is not a reason to exist)
 ```
 
 **Take the image first, then establish it** — precisely the first two steps of
@@ -108,7 +108,7 @@ already stand in sequence:
 `Origin IR` / `Sensor` / `State Layer` / `Machine Profile`. An English reader needs no Chinese
 and no *I Ching* to place them. That is a hard requirement of this decision:
 **the Chinese names carry the conceptual symmetry; the English names carry comprehensibility;
-they need not be translations of each other.** Precedent exists — 影核 is `ActionParity`,
+they need not be translations of each other.** Precedent exists — 影核 is the `Action Kernel`,
 a rendering of sense, not sound.
 
 ### Why `Sensor` and not `Observer`
@@ -164,7 +164,7 @@ Three reasons, by weight:
 | State backups `demo/.benjing-backups/` | **67 files** | 🛑 **must never change** |
 | Append-only ledger `observations.jsonl` | all | 🛑 **must never change** |
 
-### Benjing → Benqi (本境协议 / uenv)
+### Benjing (本境协议 / uenv): the name stays, its meaning narrows to the environment layer
 
 121 occurrences across 30 files (Rust / docs / config).
 
@@ -218,9 +218,10 @@ This is not a compromise. It follows from what an evidence chain *is*.
   observation, write **Sensor**.
 - **Do not** translate Quxiang as `Observer` (GoF collision) or `Watcher` (implies continuous
   listening; this is a one-shot call).
-- **Do not** translate Benjing as `Environment` — that is Benqi. Benjing is the `State Layer`.
+- **Do not** translate Xueji as `Environment` — that is Benjing (`Machine Profile`). Xueji is the `State Layer`.
+- **Do not** conflate 学籍 with 学历: the former is the layer (a register), the latter an instance (one task state).
 - The naming freeze (no changes within one quarter) now covers:
-  2Origin / Benxiang / **Quxiang** / **Benli** / Benjing / ActionParity / Northbridge /
+  2Origin / Benxiang / **Quxiang** / **Xueji** / Benjing / ActionParity / Northbridge /
   Southbridge / Academy.
 
 ---
@@ -229,7 +230,7 @@ This is not a compromise. It follows from what an evidence chain *is*.
 
 ### 5.1 The disease
 
-Count the names already in play: Benxiang, Benjing, Benli, Quxiang, ActionParity, Southbridge,
+Count the names already in play: Benxiang, Benjing, Xueji, Quxiang, ActionParity, Southbridge,
 Northbridge, Academy, task state, learning, conformance judgment, out-of-band, anchoring, Origin IR,
 bugscope, ShadowBench…
 
