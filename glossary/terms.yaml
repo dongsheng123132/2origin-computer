@@ -1,0 +1,100 @@
+# 2origin 术语唯一真源 · v1 (2026-08-26)
+# 规则：每个术语必须有 host（已存在的 repo/schema/文件）；没有宿主 = status: UNIMPLEMENTED。
+# 其他仓只读引用本文件；修改只能 PR 到 2origin-computer。CI 校验：id 存在 + 引用计数 + 哈希。
+
+version: 1
+updated: 2026-08-26
+
+primitives:
+  - id: signal
+    zh: 信号
+    en: Signal
+    definition: 带来源、时间、隐私等级的「世界发生了什么」的最小事实单元
+    host: D:/uking编程/2origin-computer (envelope.kind + provenance); 本象 Observation/Claim
+    status: PARTIAL
+
+  - id: capability
+    zh: 能力
+    en: Capability
+    definition: 一个器官可声明的、可验证的规范动作（动作不变量跨 GUI/CLI/MCP/AI 投影一致）
+    host: dongsheng123132/action-parity; dsh-capability-receipt
+    status: PARTIAL
+
+  - id: lease
+    zh: 租约
+    en: Lease
+    definition: 临时的、条件化的、可撤销的能力使用权；委托链上权限只减不增（权限单调）
+    host: dsh-principal-binding; dsh-policy-waiver
+    status: PARTIAL
+
+  - id: receipt
+    zh: 回执
+    en: Receipt
+    definition: 可离线验证的「谁在什么授权下执行了什么、结果如何」的责任凭证
+    host: dsh-audit-bundle; dsh-lineage; dsh-decision-effect-proof
+    status: PARTIAL
+
+  - id: work
+    zh: 工作接力
+    en: Work
+    definition: 任务带 verified state 跨模型/跨机续命：Work → Checkpoint → Handoff
+    host: dongsheng123132/task-passport (task.origin.schema.json, 冻结)
+    status: PARTIAL
+
+  - id: realm
+    zh: 域
+    en: Realm
+    definition: 插件的隔离世界——能力作用域+配置作用域；插件退出即其能力从系统消失
+    host: null
+    status: UNIMPLEMENTED
+    note: 唯一真缺口，kernel/ 首批实现对象
+
+supporting:
+  - id: envelope
+    zh: 信封
+    definition: 所有重要对象共用的审计/同步/验证外壳
+    host: schemas/envelope.schema.json
+    status: IMPLEMENTED
+
+  - id: principal
+    zh: 主体
+    definition: 一切授权与责任的最终归属者（人或人所委托的节点）
+    host: dsh-principal-binding
+    status: PARTIAL
+
+  - id: verified-fact
+    zh: 已验证事实
+    definition: 被观察/测试证实过的 claim，不是会话里说过的话
+    host: schemas/task.origin.schema.json (facts[].claim+verified+source)
+    status: IMPLEMENTED
+
+  - id: trust-lane
+    zh: 信任通道
+    definition: 授权凭证通道（trust.credential / proof_of_read）
+    host: 2origin-harness lib/verify.js
+    status: IMPLEMENTED
+
+  - id: golden-trace
+    zh: 黄金轨迹
+    definition: 跨仓共享的事件序列 fixture；任何实现改动必须重放一致
+    host: null
+    status: UNIMPLEMENTED
+    note: 待建 conformance/traces/
+
+  - id: organ
+    zh: 器官
+    definition: 提供 signal 与 capability 的设备/进程/传感器
+    host: null
+    status: UNIMPLEMENTED
+
+  - id: plugin
+    zh: 插件
+    definition: 内核之外的一切（模型/记忆/UI/自动化），皆可替换拔除
+    host: null (kernel 侧未建；DSH 生态为先例)
+    status: UNIMPLEMENTED
+
+forbidden_synonyms:
+  # 抓到即回本表裁决，禁止在各仓使用这些别名指代上表概念
+  - {alias: session, means: work}
+  - {alias: token,   means: lease}
+  - {alias: audit-log, means: receipt}
