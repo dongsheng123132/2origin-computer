@@ -189,6 +189,22 @@ Claude Code 会话记录（3.0MB + 2.5MB，按字节钉死）。`deepseek-v4-fla
 | transcript-10x | 40,397 | 53.3% [30.1,75.2] | 35.0% [22.1,50.5] | 否 |
 | none（空上下文） | 231 | 33.3% [15.2,58.3] | 47.5% [32.9,62.5] | **是** |
 
+---
+
+## C11 — Delegated authority reference loop ✅
+
+> 工作可以跨模型交接，权限不能凭空交接。一个 carrier 只有在主体的 active lease、明确的
+> capability、绑定本次 effect 的人工确认同时成立时，才可执行高风险动作。
+
+**Test:** `node conformance/tools/verify-delegation-lease.mjs` 验证 lease 对象的正反样本；
+`node ../ShadowOS\ =\ Harness\ OS/southbridge/verify-delegated-email.mjs` 跑本地 mock carrier。
+
+**Pass =** 无确认零投递；确认后产生 receipt；幂等重放不双发；撤销后两个不同 carrier 都被拒绝，
+且既有 receipt 不变、准许与拒绝均留审计。
+
+**范围声明：** 这是无网络、无真实凭据的参考闭环。`approval.human` 明确标为 `test_only`，不声称
+完成生产身份认证、电子签名、密钥托管或 SMTP 对接。协议语义见 `RFC-0007`。
+
 四条结论：
 
 1. **补上最强对照后差距仍显著**：事实召回 2origin 97.5% vs 最强对照 rag 60.0%，

@@ -114,6 +114,21 @@ fi
 manual "C2" "完整跨 harness（真实 Codex 续作）需 codex exec：见 RFC §8-B/C"
 manual "C3" "完整跨模型（真实第二端点）需第二个模型：见 RFC §8 与 conformance README"
 
+# ── C11 主体委托租约（离线、无真实凭据）──
+say ""
+say "── C11 Delegated authority reference loop ──"
+LEASE_CHECK="$ROOT/conformance/tools/verify-delegation-lease.mjs"
+EMAIL_CHECK="$ROOT/../ShadowOS = Harness OS/southbridge/verify-delegated-email.mjs"
+if command -v node >/dev/null 2>&1 && [ -f "$LEASE_CHECK" ] && [ -f "$EMAIL_CHECK" ]; then
+  if node "$LEASE_CHECK" >/dev/null 2>&1 && node "$EMAIL_CHECK" >/dev/null 2>&1; then
+    pass "C11 委托：确认前零投递、撤销后跨 carrier 拒绝"
+  else
+    fail "C11 委托" "lease schema 或参考闭环未通过"
+  fi
+else
+  manual "C11" "缺 node 或 delegation lease/ShadowOS 参考实现"
+fi
+
 # ── C8 学历跨会话保留率（ShadowWork Bench）──
 say ""
 say "── C8 Cross-Session Retention (ShadowWork Bench) ──"
