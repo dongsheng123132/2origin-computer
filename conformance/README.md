@@ -224,3 +224,35 @@ Claude Code 会话记录（3.0MB + 2.5MB，按字节钉死）。`deepseek-v4-fla
 > **一条如实作废的指标**：为突破开卷天花板新加的"两跳题"分不开任何一臂（六臂挤在 13.4pp 内，
 > 空上下文臂还比 2origin 高 0.5pp）——它测的是主题相似度而非状态归属，不用于任何结论。
 > 完整方法、置信区间、以及这轮抓出的**四个判分器自身的 bug** 见 `2origin-harness/bench/RESULTS-v3.md`。
+
+---
+
+## C12 — Golden Trace Replay ✅
+
+> **编号说明（既存问题，不改动，只显式标注）：** 本文件里 C11 编号被两个条目共用
+> （"Delegated authority reference loop" 与 "External Baseline"），这是既存冲突，
+> 沿用旧编号是为了不打断已有引用。本条新增内容编号为 **C12**，避免进一步混淆。
+
+> 跨仓库判据：ShadowOS 侧唯一产生者（MockProvider，经 `runtime/run.mjs start`）
+> 用同一份剧本（`runtime/fixtures/plan-golden.json`）跑出的 OriginEvent 因果轨迹，
+> 归一化（剥离 run_id 及其派生哈希，见 `runtime/trace-normalize.mjs` 的 RULES）后，
+> 必须跟已归档在本仓 `conformance/traces/origin-event/` 下的 fixture 逐字节一致——
+> 任何实现改动之后重放，必须能复现同一条轨迹，否则说明改动悄悄改变了执行语义。
+
+**Test:** `node "<ShadowOS 仓根>/runtime/verify-golden-trace.mjs"` 跑 G1-G4：
+G1 新 run-id 重放逐字节一致、G2 归一化后的汇总哈希（chain_head）相等、
+G3（反向）篡改 fixture 一字符必须变红、G4 归一化清单每条规则都有非空 `why`。
+
+**Pass =** G1-G4 全部通过（脚本退出码 0）。
+
+**Evidence（2026-09-02）：** 用 `--run-id GT-0001` 跑出的轨迹经
+`runtime/promote-trace.mjs` 归档为 `conformance/traces/origin-event/GT-0001.trace.json`；
+`verify-golden-trace.mjs` 用一个全新 run-id 重放，G1/G2 通过（chain_head
+`12596ebe249d01c4b45bfd1cb029435667f138582cb38bddce0e515391ac1113`）；G3 做了真实的
+"改一个字符→变红→恢复→变绿"自证；G4 逐条核对 8 条归一化规则的 `why` 字段均非空。
+
+**范围声明：** golden-trace 词条（`glossary/terms.yaml`）状态标 **PARTIAL**，不是
+IMPLEMENTED——定义里"任何实现改动必须重放一致"隐含多实现互相校验，本次只有
+MockProvider 一个产生者，"重放一致"目前只验证了"同一产生者、不同 run_id 之间"，
+没有验证"跨实现"（例如真实 codex/hermes Provider 产出的轨迹是否也能对上同一份
+fixture）。这条局限在 `verify-golden-trace.mjs` 的输出结尾也会打印出来，不藏起来。

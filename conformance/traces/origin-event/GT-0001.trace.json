@@ -1,0 +1,221 @@
+{
+  "spec": "golden-trace/0.1",
+  "source_repo": "ShadowOS = Harness OS",
+  "source_run_id": "GT-0001",
+  "promoted_at": "2026-09-02T03:19:40.356Z",
+  "chain_head": "12596ebe249d01c4b45bfd1cb029435667f138582cb38bddce0e515391ac1113",
+  "raw_chain_head_fyi": "d41a7acd15d2262829bb35c355a170bdfb60fe1fc69a80be204cb895dd4968c7",
+  "event_count": 6,
+  "rules": [
+    {
+      "field": "id",
+      "action": "把 run_id 子串替换成 <RUN_ID>",
+      "why": "id = evt:<run_id>:<seq补零>。golden-trace 要问的是\"同一份剧本重放是否语义一致\"，不是\"用没用同一个 run_id 字符串\"——保留原值会让任何一次新 run_id 的重放都必然逐字节比对失败，判据将永远无法通过，而失败原因跟实现有没有回归毫无关系。"
+    },
+    {
+      "field": "content.run_id",
+      "action": "整体替换为 <RUN_ID>",
+      "why": "同上——run_id 本体就是\"这次跑的是哪个 run\"这件事本身，跟\"剧本执行到哪一步、做了什么\"这个因果内容无关，必须剥离才能做跨 run 比较。"
+    },
+    {
+      "field": "provenance[]",
+      "action": "数组每一项都做 run_id 子串替换",
+      "why": "provenance 数组里同时装着 \"run:<run_id>\" 和 \"evt:<run_id>:seq\" 两种编码形式，跟 id/run_id 是同一个问题的两个出现点，必须一起处理——否则会漏网，让比对看起来\"几乎一致\"却因为这个数组差一个字符而整条判据变红，误导排查方向。"
+    },
+    {
+      "field": "content.payload.resume_token（checkpoint 事件专属）",
+      "action": "把 run_id 子串替换成 <RUN_ID>",
+      "why": "MockProvider（providers/mock.mjs）把 run_id 直接拼进 resume_token 字符串（`resume:${run.runId}:seq${seq}`），同一份剧本换个 run_id 起跑，这个字符串必然不同，处理方式跟 id/run_id/provenance 完全一致，只是字段位置不同。"
+    },
+    {
+      "field": "content.prev_event_sha256",
+      "action": "非 null 值整体替换为 <RUN_SPECIFIC_HASH>",
+      "why": "这个值是 chainHash(前一条事件) 的结果，而 chainHash 的输入包含 content.run_id（origin-event.mjs 的 normalize() 只剥墙钟，故意不剥 run_id——链本该认自己的 run_id），所以它是\"run_id 的派生量\"：同一份剧本换 run_id 起跑必然得到不同的哈希值，但这不代表因果链构造逻辑本身变了。链完整性由 chain.mjs 的 verifyChain() 在原始（未归一化）事件上独立验证，不靠这里的逐字节比对——两件事故意不共用同一份判据。首条事件（seq=0）本来就是 null，null 不含 run_id 信息，原样保留不替换。"
+    },
+    {
+      "field": "content.payload.chain_head（checkpoint 事件专属）",
+      "action": "整体替换为 <RUN_SPECIFIC_HASH>",
+      "why": "MockProvider 里这个字段的值就是内部变量 prev——对\"前一条事件\"调用 chainHash() 的结果，跟 content.prev_event_sha256 是同一枚硬币的两面（同一种哈希、只是在两处各存了一份），因此用同一条理由、同一种处理。"
+    },
+    {
+      "field": "content.payload.state_content_hash（checkpoint 事件专属）",
+      "action": "整体替换为 <RUN_SPECIFIC_HASH>",
+      "why": "stateContentHash()（origin-event.mjs）对\"到这一刻为止已产生事件\"逐条算 chainHash() 之后再整体哈希一次——而每条 chainHash() 都含 run_id，所以这个值是双重派生的 run_id 相关量，处理方式跟 chain_head 一致：换 run_id 起跑必然不同值，但不代表状态计算逻辑变了。"
+    },
+    {
+      "field": "created_at",
+      "action": "保留，不剥离（与 chainHash 的 normalize() 刻意不同）",
+      "why": "MockProvider 的 created_at 由固定基准 GOLDEN_EPOCH + seq*STEP_MS 纯函数推算（providers/mock.mjs），不依赖 run_id、不依赖真实墙钟，本身是\"换任何 run_id 起跑都不变\"的确定性值。保留它能多验一层\"事件产出的顺序/数量有没有跑偏\"（一旦跑偏，后续时间戳会整体平移，这里就会被逐字节比对抓到）；chainHash 的 normalize() 剥离 created_at 是因为链哈希只关心\"因果链有没有断\"，不需要这层敏感度（它已经用 seq + prev_event_sha256 保证顺序）——两者目的不同，故意不抄同一份取舍。已知局限（如实交代，不假装解决）：这条规则的前提是\"created_at 不依赖 run_id/真实墙钟\"，只在当前唯一产生者 MockProvider 身上成立；一旦未来接入会产生真实墙钟的 Provider，这条规则需要重新评估——这超出本轮范围，不在这里预先处理。"
+    }
+  ],
+  "normalized": [
+    {
+      "spec": "2origin/0.1",
+      "kind": "origin.event",
+      "id": "evt:<RUN_ID>:000000",
+      "version": 1,
+      "scope": "project:shadowos",
+      "actor": "harness:mock",
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "provenance": [
+        "run:<RUN_ID>"
+      ],
+      "content": {
+        "event_spec": "origin.event/0.1",
+        "type": "run.started",
+        "run_id": "<RUN_ID>",
+        "seq": 0,
+        "attempt": 1,
+        "prev_event_sha256": null,
+        "actor_observed": {},
+        "payload": {
+          "task": "t:golden-fixture",
+          "goal_ref": "goal:golden-fixture",
+          "expect_content_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "plan_sha256": "plan-golden-v1"
+        }
+      }
+    },
+    {
+      "spec": "2origin/0.1",
+      "kind": "origin.event",
+      "id": "evt:<RUN_ID>:000001",
+      "version": 1,
+      "scope": "project:shadowos",
+      "actor": "harness:mock",
+      "created_at": "2026-01-01T00:00:01.000Z",
+      "provenance": [
+        "run:<RUN_ID>",
+        "evt:<RUN_ID>:000000"
+      ],
+      "content": {
+        "event_spec": "origin.event/0.1",
+        "type": "agent.started",
+        "run_id": "<RUN_ID>",
+        "seq": 1,
+        "attempt": 1,
+        "prev_event_sha256": "<RUN_SPECIFIC_HASH>",
+        "actor_observed": {},
+        "payload": {
+          "provider": "mock",
+          "attempt": 1,
+          "resumed_from_seq": null,
+          "capabilities": {
+            "name": "mock",
+            "deterministic": true
+          }
+        }
+      }
+    },
+    {
+      "spec": "2origin/0.1",
+      "kind": "origin.event",
+      "id": "evt:<RUN_ID>:000002",
+      "version": 1,
+      "scope": "project:shadowos",
+      "actor": "harness:mock",
+      "created_at": "2026-01-01T00:00:02.000Z",
+      "provenance": [
+        "run:<RUN_ID>",
+        "evt:<RUN_ID>:000001"
+      ],
+      "content": {
+        "event_spec": "origin.event/0.1",
+        "type": "object.proposed",
+        "run_id": "<RUN_ID>",
+        "seq": 2,
+        "attempt": 1,
+        "prev_event_sha256": "<RUN_SPECIFIC_HASH>",
+        "actor_observed": {},
+        "payload": {
+          "target": "demo/runtime-m1/fixtures/golden.txt",
+          "content_sha256": "placeholder-content-sha256-not-a-real-hash"
+        }
+      }
+    },
+    {
+      "spec": "2origin/0.1",
+      "kind": "origin.event",
+      "id": "evt:<RUN_ID>:000003",
+      "version": 1,
+      "scope": "project:shadowos",
+      "actor": "harness:mock",
+      "created_at": "2026-01-01T00:00:03.000Z",
+      "provenance": [
+        "run:<RUN_ID>",
+        "evt:<RUN_ID>:000002"
+      ],
+      "content": {
+        "event_spec": "origin.event/0.1",
+        "type": "object.committed",
+        "run_id": "<RUN_ID>",
+        "seq": 3,
+        "attempt": 1,
+        "prev_event_sha256": "<RUN_SPECIFIC_HASH>",
+        "actor_observed": {},
+        "payload": {
+          "action_result": {
+            "status": "done",
+            "note": "占位：这个 Step 只负责 yield 事件对象，落盘是调用方接 event-log.mjs 的事"
+          }
+        }
+      }
+    },
+    {
+      "spec": "2origin/0.1",
+      "kind": "origin.event",
+      "id": "evt:<RUN_ID>:000004",
+      "version": 1,
+      "scope": "project:shadowos",
+      "actor": "harness:mock",
+      "created_at": "2026-01-01T00:00:04.000Z",
+      "provenance": [
+        "run:<RUN_ID>",
+        "evt:<RUN_ID>:000003"
+      ],
+      "content": {
+        "event_spec": "origin.event/0.1",
+        "type": "checkpoint",
+        "run_id": "<RUN_ID>",
+        "seq": 4,
+        "attempt": 1,
+        "prev_event_sha256": "<RUN_SPECIFIC_HASH>",
+        "actor_observed": {},
+        "payload": {
+          "seq": 4,
+          "state_content_hash": "<RUN_SPECIFIC_HASH>",
+          "chain_head": "<RUN_SPECIFIC_HASH>",
+          "resume_token": "resume:<RUN_ID>:seq4"
+        }
+      }
+    },
+    {
+      "spec": "2origin/0.1",
+      "kind": "origin.event",
+      "id": "evt:<RUN_ID>:000005",
+      "version": 1,
+      "scope": "project:shadowos",
+      "actor": "harness:mock",
+      "created_at": "2026-01-01T00:00:05.000Z",
+      "provenance": [
+        "run:<RUN_ID>",
+        "evt:<RUN_ID>:000004"
+      ],
+      "content": {
+        "event_spec": "origin.event/0.1",
+        "type": "run.completed",
+        "run_id": "<RUN_ID>",
+        "seq": 5,
+        "attempt": 1,
+        "prev_event_sha256": "<RUN_SPECIFIC_HASH>",
+        "actor_observed": {},
+        "payload": {
+          "status": "success",
+          "chain_head": "placeholder-chain-head-final",
+          "final_state_content_hash": "placeholder-final-state-content-hash",
+          "unemitted": []
+        }
+      }
+    }
+  ]
+}

@@ -77,9 +77,9 @@ supporting:
   - id: golden-trace
     zh: 黄金轨迹
     definition: 跨仓共享的事件序列 fixture；任何实现改动必须重放一致
-    host: null
-    status: UNIMPLEMENTED
-    note: 待建 conformance/traces/
+    host: conformance/traces/origin-event/; ShadowOS = Harness OS runtime/trace-normalize.mjs + runtime/promote-trace.mjs + runtime/verify-golden-trace.mjs（conformance/README.md C12）
+    status: PARTIAL
+    note: 定义里"任何实现改动必须重放一致"隐含多实现互相校验；目前只有 ShadowOS 侧 MockProvider 一个产生者（经 runtime/run.mjs start），"重放一致"只验证了同一产生者、不同 run_id 之间逐字节一致，未验证跨实现（真实 codex/hermes Provider）——因此标 PARTIAL 不标 IMPLEMENTED
 
   - id: organ
     zh: 器官

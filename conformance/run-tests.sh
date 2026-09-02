@@ -228,6 +228,31 @@ else
   manual "C11" "缺 shadowwork-bench-live.mjs（见 2origin-harness/bench）"
 fi
 
+# ── C12 Golden Trace Replay（跨仓库：ShadowOS 产出的 OriginEvent 轨迹重放）──
+# 依赖：ShadowOS 仓库在本机某处存在，且 runtime/verify-golden-trace.mjs 能跑。
+# 两个仓库是独立 git 仓库，不能假设跑这个脚本的机器上 ShadowOS 一定在场（比如
+# 换一台只 clone 了 2origin-computer 的机器）——缺依赖走 MANUAL，不走 FAIL，
+# 抄的是本文件对 C2/C3 的处理法。
+#
+# 定位方式（设计决策，供跨仓库引用）：优先用 SHADOWOS_ROOT 环境变量显式指定
+# （最可靠，不靠猜）；没设就按约定相对路径猜同级目录下的 ShadowOS 仓
+# （跟本文件 C7/C11 已有的写法一致：两个仓在同一个上级目录下）；猜的路径
+# 也找不到 verify-golden-trace.mjs 就走 MANUAL，不冒充结果。
+say ""
+say "── C12 Golden Trace Replay ──"
+SHADOWOS_GUESS="$ROOT/../ShadowOS = Harness OS"
+SHADOWOS_DIR="${SHADOWOS_ROOT:-$SHADOWOS_GUESS}"
+GOLDEN_CHECK="$SHADOWOS_DIR/runtime/verify-golden-trace.mjs"
+if command -v node >/dev/null 2>&1 && [ -f "$GOLDEN_CHECK" ]; then
+  if node "$GOLDEN_CHECK" >/dev/null 2>&1; then
+    pass "C12 Golden Trace 重放：新 run-id 归一化后逐字节一致（G1-G4 全过，见 ShadowOS 仓 runtime/verify-golden-trace.mjs 输出）"
+  else
+    fail "C12 Golden Trace" "verify-golden-trace.mjs 未通过（见 ShadowOS 仓 $GOLDEN_CHECK 的输出）"
+  fi
+else
+  manual "C12" "未找到 ShadowOS 仓库（试过 SHADOWOS_ROOT 环境变量与猜测路径 $SHADOWOS_GUESS）或缺 node，跳过——只在 2origin-computer + ShadowOS 两个仓都在场的机器上能自动验证"
+fi
+
 # ── 汇总 ──
 say ""
 say "════════ 汇总 ════════"
