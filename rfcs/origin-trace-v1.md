@@ -40,6 +40,13 @@ Trace、审计和请求文件是观测材料；模型 API 计费不在对象 dif
 `validate` 验结构、哈希与链；`replay` 离线重算判据及状态；`gate` 将失败转为非零退出码；`diff` 按角色/动作/出现次数对齐，比较参数、结果与状态。
 这里的 replay 不重新执行模型、不重放外部副作用，不声称能确定性复现模型采样。未知策略拒绝 gate，不能凭自己声明的新断言放行。
 
+## 同一 Trace 契约的真实诊断策略（2026-09-09）
+
+新增 `regression-diagnosis-v1` 任务策略，不新增 Trace 协议版本。Collector/Hermes、Diagnostician/Codex、Reviewer/DSH 是三个实际宿主进程；角色与 `output.host`、观测模型字段分开。模型字段无可靠来源时为 `unobserved`。
+源输入为绑定仓库里的 B5.1b、E1d 代码片段及先前失败摘要，记录源文件 hash、行号与片段 hash。交接通过 `input.handoff_hash` 绑定上一结果，并记录实际交接文本。候选报告必须引用输入中真实存在的逐字片段，且独立 Reviewer 明确认可。
+权威对象范围为新建隔离 `report.md`；COMMIT 是诊断报告验收，不是根因证实或 Bug 修复验收。检查三宿主不重复、进程真实成功退出、交接完整、引用一致、复核通过、先验证再提交及写后回读。对原 CSV 策略保持兼容。
+实时进度为旁路 `progress.jsonl`，只能用于未完成阶段的 UI 提示，不进入 accepted state。UI 只展示完整记录行，封口前没有验收通过；封口后通过共享 replay 重算。CLI/界面均不将播放操作变成重新执行模型或写入世界。kill/resume 仍后置。
+
 ## 参考与答辩引用
 
 - AgentReplay trace contract：https://github.com/anzal1/agentreplay/blob/main/docs/TRACE_SPEC.md 。借鉴冻结 tool 边界、验收及回归思路，没有替换本象核心、没有宣称 wire-compatible。
