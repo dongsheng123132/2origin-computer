@@ -25,7 +25,7 @@ Trace 是观察记录，不是第二个状态写入核心。现有 OriginEvent �
 
 ## v1 必须遵守的验收状态机
 
-本节为规范要求，由实现的 `validate` 和各宿主登记的 `replay` 策略共同执行。单个 run 只有一个提案、一次 VERIFY、一个末尾决定；修订候选必须创建新 run，再 diff。多个事务、kill/resume、token 流均不进入本次契约。
+本节为规范要求，由实现的 `validate` 和各宿主登记的 `replay` 策略共同执行。单个 run 只有一个提案、一次 VERIFY、一个末尾决定；修订候选必须创建新 run，再 diff。多个事务、任意阶段恢复、token 流均不进入本次契约。写前检查点恢复见下节。
 
 | 阶段 | 绑定内容 | 对 accepted state 的影响 |
 |---|---|---|
@@ -57,6 +57,22 @@ run.task.compiler 钉住 commit-compiler.mjs 和其唯一依赖 constraints.mjs 
 实际证据在实现仓 `demo/origin-trace/acceptance-20260909-{bad,good,stale}/`：显式假修复声明 REJECT；修正后 COMMIT；陈旧 head REJECT。三次都是复用历史真实模型产物的本地编译器执行，不能标成三次新的模型运行。新策略由 CLI 注册，本轮浏览器不装本象编译器、不宣称验收该策略。
 
 边界：world.json 的初始化 v0 是基线；对象 diff 只涵盖该世界里的 accepted 对象，不包含 Trace/审计。此处字节前置条件与回读仅证明隔离单写者样例，不证明共享权威状态线性一致、多文件原子提交、崩溃恢复或跨进程恰好一次执行。hash 能检测篡改不等于记录者诚实；这些边界不因 gate 通过而消失。
+
+## 写前检查点恢复（同一 v1，2026-09-09）
+
+Trace 必须直接携带 pre/post 快照（state_before/state_after）、对象 side_effect_diff、每个 span 的 approval。新记录还将每条判据的 `{id,passed}` 保存到 seal.evidence.assertion_results。判据 ID 列表仍在 header.assertions；不得复制新的 pre_state/post_state 别名制造第二份状态。回放核对保存结果与重算结果完全一致。既有历史记录仍可回放；启用恢复的 run 缺少保存结果必须拒绝 gate。
+
+当前仅启用本象验收策略的 `run.recovery={mode:"precommit-only",owner_pid,owner_agent}`。本地运行进程在 PROPOSE/VERIFY 两条 span 完整落盘后产生 checkpoint.json，绑定前缀字节 hash、authoritative_head、run_id 和 owner；此时尚未执行世界写入。前两条原事件在接力时保留，不重新生成模型结果。
+
+resume 必须：取同一运行目录的核心文件锁；确认旧 owner PID 已退出且后继 worker 标签不同；检查完整前缀 hash、编译器版本、原 approval、验证结果和当前世界 head；重新执行确定性本象验收。活进程、陈旧 head、前缀改变或编译器漂移均拒绝，不可按超时猜测拥有写权限。PID/标签只是本机运行证据，不是跨机器安全认证。
+
+接力使用原有 `tool_call` span，tool=origin.trace.resume，input 绑定 checkpoint_sha256、expected_head、proposal_hash、verification_hash，output 记录前后 worker/PID、owner_observed_dead、execution=runtime-worker-handoff、model=none；不发明第二条协议。之后仍只有一个 COMMIT/REJECT。审批依据为 dead-owner-verified-checkpoint；它不能代替世界写核心的前置条件。
+
+写前先经南桥持久化 resume-intent.json。无 intent 的合法检查点可以恢复；完整封口且世界回读匹配则返回 already_completed，零重复写入；已有 intent 而未封口则返回 RECOVERY_REQUIRES_RECONCILIATION。包括“世界已写入但 Trace 尚未封口”的窗口，必须拒绝自动再提交。本版不承诺多文件原子事务或该窗口的自动修复。
+
+文件锁复用 agentteams-lock/0.4，异步临界区必须持锁直到完成；临界区重读和 fence 不能省略。此保证只覆盖使用该入口的本机运行进程；不泛化到绕过核心的写入者、断电耐久性、跨机器接力或模型内部上下文续接。
+
+验收证据在实现仓 verification-recovery.json：实际终止 checkpoint 进程后由另一个运行进程完成；并发接力只有一次 COMMIT；重复 resume 不改变 Trace/世界；写后故障被明确阻断。没有新模型推理，不能表述成已经证明杀掉一个模型服务后另一模型自动续推理。
 
 ## 首个可执行策略：csv-summary-v1
 
