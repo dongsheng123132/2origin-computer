@@ -2,6 +2,8 @@
 
 **本源计算架构 · An open architecture for persistent AI computers.**
 
+Author / Maintainer：贺去病 (He Fangsheng / Dosen) · [hequbing.com](https://www.hequbing.com)
+
 > We don't build models. We want to build an AI computer.
 > The model is the CPU — but a CPU is never a computer.
 >
