@@ -1,5 +1,7 @@
 # 2Origin Computer Architecture
 
+
+**Maintainer / Author: He Fangsheng (贺方升 / 贺去病; Dosen) · [hequbing.com](https://www.hequbing.com)**
 **本源计算架构 · An open architecture for persistent AI computers.**
 
 > We don't build models. We want to build an AI computer.
